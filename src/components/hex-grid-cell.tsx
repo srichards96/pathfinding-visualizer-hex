@@ -1,4 +1,10 @@
+import {
+  HexGridWideRowType,
+  HexGridWideRowTypes,
+} from "../constants/hex/hex-grid-wide-row-types";
+import { MouseButtonFlags } from "../constants/mouse-buttons";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
+import { mouseButtonsHeld } from "../util/mouse-buttons-held";
 
 // Some math to calculate various values for sizing cells...
 const CELL_SIDE_LENGTH = 30; // Length of each side of hexagon
@@ -8,22 +14,35 @@ const CELL_SPACING = 4;
 
 type Props = {
   cell: HexGridCellType;
-  evenRow: boolean;
-  visited: boolean;
+  wideRows: HexGridWideRowType;
 };
 
-export function HexGridCell({ cell, evenRow, visited }: Props) {
+export function HexGridCell({ cell, wideRows }: Props) {
+  // Determine whether row is a "wide" row
+  // Hex grid rows alternate between n - 1 and n items wide
+  const isWideRow =
+    wideRows === HexGridWideRowTypes.Even ? cell.y % 2 === 1 : cell.y % 2 === 0;
+
   const left =
     CELL_SPACING +
     cell.x * (CELL_WIDTH + CELL_SIDE_LENGTH + 2 * CELL_SPACING) +
-    (evenRow ? 1.5 * CELL_SIDE_LENGTH + CELL_SPACING : 0); // Offset for every odd row...
+    (!isWideRow ? 1.5 * CELL_SIDE_LENGTH + CELL_SPACING : 0); // Non-wide rows need extra padding on left
 
   const top = CELL_SPACING + cell.y * (CELL_SIDE_LENGTH - 0.5 * CELL_SPACING);
 
   return (
     <div
+      onMouseDown={() => console.log("onMouseDown", { x: cell.x, y: cell.y })}
+      onMouseEnter={(e) => {
+        if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
+          console.log("onMouseEnter", { x: cell.x, y: cell.y });
+        }
+      }}
+      data-x={cell.x}
+      data-y={cell.y}
       className="hex-grid-cell"
-      data-visited={visited}
+      data-visited={cell.visited}
+      data-on-path={cell.onPath}
       style={{
         width: CELL_WIDTH,
         height: CELL_HEIGHT,
