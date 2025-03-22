@@ -1,10 +1,9 @@
+import { MouseEvent } from "react";
 import {
   HexGridWideRowType,
   HexGridWideRowTypes,
 } from "../constants/hex/hex-grid-wide-row-types";
-import { MouseButtonFlags } from "../constants/mouse-buttons";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
-import { mouseButtonsHeld } from "../util/mouse-buttons-held";
 
 // Some math to calculate various values for sizing cells...
 const CELL_SIDE_LENGTH = 30; // Length of each side of hexagon
@@ -15,9 +14,20 @@ const CELL_SPACING = 4;
 type Props = {
   cell: HexGridCellType;
   wideRows: HexGridWideRowType;
+  onMouseDown: (e: MouseEvent, cell: HexGridCellType) => void;
+  onMouseEnter: (e: MouseEvent, cell: HexGridCellType) => void;
+  isStart: boolean;
+  isTarget: boolean;
 };
 
-export function HexGridCell({ cell, wideRows }: Props) {
+export function HexGridCell({
+  cell,
+  wideRows,
+  onMouseDown,
+  onMouseEnter,
+  isStart,
+  isTarget,
+}: Props) {
   // Determine whether row is a "wide" row
   // Hex grid rows alternate between n - 1 and n items wide
   const isWideRow =
@@ -32,15 +42,7 @@ export function HexGridCell({ cell, wideRows }: Props) {
 
   return (
     <div
-      onMouseDown={() => console.log("onMouseDown", { x: cell.x, y: cell.y })}
-      onMouseEnter={(e) => {
-        if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
-          console.log("onMouseEnter", { x: cell.x, y: cell.y });
-        }
-      }}
-      data-x={cell.x}
-      data-y={cell.y}
-      className="hex-grid-cell"
+      className="hex-grid-cell relative"
       data-visited={cell.visited}
       data-on-path={cell.onPath}
       style={{
@@ -49,6 +51,15 @@ export function HexGridCell({ cell, wideRows }: Props) {
         position: "absolute",
         transform: `translate3D(${left}px, ${top}px, 0)`,
       }}
-    />
+      onMouseDown={(e) => onMouseDown(e, cell)}
+      onMouseEnter={(e) => onMouseEnter(e, cell)}
+    >
+      {(isStart || isTarget) && (
+        <span className="absolute left-1/2 top-1/2 -translate-1/2 z-10">
+          {isStart && "start"}
+          {isTarget && "target"}
+        </span>
+      )}
+    </div>
   );
 }

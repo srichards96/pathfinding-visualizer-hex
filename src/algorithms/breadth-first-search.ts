@@ -1,5 +1,6 @@
 import { HexGridWideRowType } from "../constants/hex/hex-grid-wide-row-types";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
+import { PathfindingResult } from "../types/pathfinding-data";
 import { map2d } from "../util/array/map-2d";
 import { getTraversal } from "../util/graph/get-traversal";
 import { getHexNeighbors } from "../util/hex/get-hex-neighbors";
@@ -17,7 +18,12 @@ type Options = {
   target: HexGridCellType;
   wideRows: HexGridWideRowType;
 };
-export function breadthFirstSearch({ grid, start, target, wideRows }: Options) {
+export function breadthFirstSearch({
+  grid,
+  start,
+  target,
+  wideRows,
+}: Options): PathfindingResult {
   const bfsGrid = map2d(
     grid,
     ({ x, y }) => ({ x, y, visited: false, parent: null } as BFSNode)
@@ -63,9 +69,8 @@ export function breadthFirstSearch({ grid, start, target, wideRows }: Options) {
       ? getTraversal({ root: endNode, getParentFn: (n) => n?.parent })
       : undefined;
 
-  return [
-    // Only return x/y positions
-    traversedNodes.map(({ x, y }) => ({ x, y })),
-    path?.map(({ x, y }) => ({ x, y })),
-  ] as const;
+  return {
+    cellsTraversed: traversedNodes.map(({ x, y }) => ({ x, y })),
+    cellsOnPath: path?.map(({ x, y }) => ({ x, y })),
+  };
 }

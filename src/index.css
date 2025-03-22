@@ -2,7 +2,7 @@
 
 .hex-grid-cell {
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-  @apply bg-gray-400;
+  @apply bg-gray-400 select-none;
 }
 
 .hex-grid-cell::before,
@@ -40,7 +40,8 @@
     border-radius: 50%;
   }
   100% {
-    transform: scale(1);
+    /* Make sure it fully covers the ::before for visited cells */
+    transform: scale(1.01);
     border-radius: 0;
   }
 }
