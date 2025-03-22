@@ -29,7 +29,7 @@ export function HexGrid({
   return (
     <div
       ref={ref}
-      className="flex-grow p-2"
+      className="flex-grow p-1"
       onContextMenu={(e) => e.preventDefault()}
     >
       {grid.map((row, rowI) => (

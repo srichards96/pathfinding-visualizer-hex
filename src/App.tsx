@@ -7,8 +7,16 @@ import { mouseButtonsHeld } from "./util/mouse-buttons-held";
 import { MouseButtonFlags } from "./constants/mouse-buttons";
 import { HexGridCellType } from "./types/hex-grid-cell-type";
 import { HexGrid } from "./components/hex-grid";
-import { useCallback, useState, MouseEvent, useMemo } from "react";
+import {
+  useCallback,
+  useState,
+  MouseEvent,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import { calculateHexCellSizingData } from "./util/hex/calculate-hex-cell-sizing-data";
+import { resizeHexGridToFitContainer } from "./util/hex/resize-hex-grid-to-fit-container";
 
 const rows = 25;
 const cols = 8;
@@ -18,6 +26,8 @@ function App() {
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
   const [startPosition, setStartPosition] = useState<HexGridPosition>();
   const [targetPosition, setTargetPosition] = useState<HexGridPosition>();
+
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   // TODO: make variable via a form...
   const [sideLength] = useState(30);
@@ -44,6 +54,46 @@ function App() {
     },
     []
   );
+
+  // On load, and when cell sizing changes, resize grid to fit available space...
+  useEffect(() => {
+    const gridContainerElement = gridContainerRef.current;
+
+    if (gridContainerElement == null) {
+      return;
+    }
+
+    setGrid((draft) =>
+      resizeHexGridToFitContainer({
+        grid: draft,
+        element: gridContainerElement,
+        hexCellSizingData,
+        wideRows,
+      })
+    );
+  }, [hexCellSizingData, setGrid]);
+
+  // On window resize, and when cell sizing changes, resize grid to fit available space...
+  useEffect(() => {
+    function onResize() {
+      const gridContainerElement = gridContainerRef.current;
+
+      if (gridContainerElement !== null) {
+        setGrid((draft) =>
+          resizeHexGridToFitContainer({
+            grid: draft,
+            element: gridContainerElement,
+            hexCellSizingData,
+            wideRows,
+          })
+        );
+      }
+    }
+
+    window.addEventListener("resize", onResize);
+
+    return () => window.removeEventListener("resize", onResize);
+  }, [hexCellSizingData, setGrid]);
 
   // TODO: make this not suck...
   function testBfs() {
@@ -109,6 +159,7 @@ function App() {
       </div>
 
       <HexGrid
+        ref={gridContainerRef}
         grid={grid}
         wideRows={wideRows}
         hexCellSizingData={hexCellSizingData}
