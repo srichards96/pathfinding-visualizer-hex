@@ -8,6 +8,7 @@ import { getHexNeighbors } from "../util/hex/get-hex-neighbors";
 type BFSNode = {
   x: number;
   y: number;
+  wall: boolean;
   visited: boolean;
   parent: BFSNode | null;
 };
@@ -24,10 +25,13 @@ export function breadthFirstSearch({
   target,
   wideRows,
 }: Options): PathfindingResult {
-  const bfsGrid = map2d(
-    grid,
-    ({ x, y }) => ({ x, y, visited: false, parent: null } as BFSNode)
-  );
+  const bfsGrid = map2d<HexGridCellType, BFSNode>(grid, ({ x, y, wall }) => ({
+    x,
+    y,
+    wall,
+    visited: false,
+    parent: null,
+  }));
 
   const traversedNodes: BFSNode[] = [];
   let endNode: BFSNode | null = null;
@@ -53,7 +57,11 @@ export function breadthFirstSearch({
       x: curr.x,
       y: curr.y,
       wideRows,
-    }).filter((x) => x != null);
+    })
+      // Not out-of-bounds
+      .filter((x) => x != null)
+      // Not a wall
+      .filter((x) => x.wall === false);
 
     for (const neighbor of neighbors) {
       if (!neighbor.visited) {

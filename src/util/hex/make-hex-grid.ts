@@ -36,8 +36,7 @@ export function makeHexGrid({ rows, cols, wideRows }: Options) {
         weight: 0,
         visited: false,
         onPath: false,
-        isStart: false,
-        isTarget: false,
+        wall: false,
       });
     }
 

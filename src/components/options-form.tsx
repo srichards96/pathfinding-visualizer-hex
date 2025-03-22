@@ -1,10 +1,30 @@
 import { FormEvent, useId } from "react";
 import { useImmer } from "use-immer";
 
+type CellPrainbrush =
+  | {
+      type: "start" | "target" | "empty" | "wall";
+    }
+  | {
+      type: "weighted";
+      weight: number;
+    };
+
 export type PathfindingVisualerFormValues = {
   cellSize: number;
   cellSpacing: number;
   animationSpeed: number;
+  cellPaintbrush: CellPrainbrush;
+};
+
+type FormValidation = {
+  cellSize?: string;
+  cellSpacing?: string;
+  animationSpeed?: string;
+  cellPaintbrush?: {
+    type?: string;
+    weight?: string;
+  };
 };
 
 type Props = {
@@ -15,16 +35,37 @@ type Props = {
 export function OptionsForm({ defaultValues, onSubmit }: Props) {
   const [values, setValues] =
     useImmer<PathfindingVisualerFormValues>(defaultValues);
-  const [validation, setValidation] = useImmer<
-    Partial<Record<keyof PathfindingVisualerFormValues, string>>
-  >({});
+  const [validation, setValidation] = useImmer<FormValidation>({});
 
   function validateValues() {
-    const { cellSize, cellSpacing, animationSpeed } = values;
+    const { cellPaintbrush, cellSize, cellSpacing, animationSpeed } = values;
 
     let valid = true;
 
     setValidation({});
+
+    if (cellPaintbrush.type === "weighted") {
+      const { weight } = cellPaintbrush;
+      if (isNaN(weight) || typeof weight !== "number") {
+        setValidation((draft) => {
+          draft.cellPaintbrush ??= {};
+          draft.cellPaintbrush.weight = "Paintbrush Weight is required";
+        });
+        valid = false;
+      } else if (weight < 1) {
+        setValidation((draft) => {
+          draft.cellPaintbrush ??= {};
+          draft.cellSize = "Paintbrush Weight must be at least 1";
+        });
+        valid = false;
+      } else if (cellSize > 1000) {
+        setValidation((draft) => {
+          draft.cellPaintbrush ??= {};
+          draft.cellSize = "Plainbrush Weight must be at most 1000";
+        });
+        valid = false;
+      }
+    }
 
     if (isNaN(cellSize) || typeof cellSize !== "number") {
       setValidation((draft) => {
@@ -88,12 +129,130 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
     }
   }
 
+  const paintbrushFieldName = useId();
+  const paintbrushWeightFieldId = useId();
   const cellSizeFieldId = useId();
   const cellSpacingFieldId = useId();
   const animationSpeedFieldId = useId();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2 border p-2 rounded-sm relative">
+        <h2 className="text-xl absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-gray-800 px-2">
+          Paintbrush
+        </h2>
+
+        <span className="inline-block mb-2">Type:</span>
+
+        <fieldset className="grid grid-cols-2">
+          <div className="space-y-1">
+            <label className="flex gap-2 items-center">
+              <input
+                name={paintbrushFieldName}
+                type="radio"
+                checked={values.cellPaintbrush.type === "empty"}
+                value="empty"
+                onChange={() =>
+                  setValues((draft) => {
+                    draft.cellPaintbrush = { type: "empty" };
+                  })
+                }
+              />
+              Empty
+            </label>
+            <label className="flex gap-2 items-center">
+              <input
+                name={paintbrushFieldName}
+                type="radio"
+                checked={values.cellPaintbrush.type === "wall"}
+                value="wall"
+                onChange={() =>
+                  setValues((draft) => {
+                    draft.cellPaintbrush = { type: "wall" };
+                  })
+                }
+              />
+              Wall
+            </label>
+            <label className="flex gap-2 items-center">
+              <input
+                name={paintbrushFieldName}
+                type="radio"
+                checked={values.cellPaintbrush.type === "weighted"}
+                value="weighted"
+                onChange={() =>
+                  setValues((draft) => {
+                    draft.cellPaintbrush = { type: "weighted", weight: 1 };
+                  })
+                }
+              />
+              Weighted
+            </label>
+          </div>
+
+          <div className="space-y-1">
+            <label className="flex gap-2 items-center">
+              <input
+                name={paintbrushFieldName}
+                type="radio"
+                checked={values.cellPaintbrush.type === "start"}
+                value="start"
+                onChange={() =>
+                  setValues((draft) => {
+                    draft.cellPaintbrush = { type: "start" };
+                  })
+                }
+              />
+              Start
+            </label>
+            <label className="flex gap-2 items-center">
+              <input
+                name={paintbrushFieldName}
+                type="radio"
+                checked={values.cellPaintbrush.type === "target"}
+                value="target"
+                onChange={() =>
+                  setValues((draft) => {
+                    draft.cellPaintbrush = { type: "target" };
+                  })
+                }
+              />
+              Target
+            </label>
+          </div>
+        </fieldset>
+
+        {values.cellPaintbrush.type === "weighted" && (
+          <div className="space-y-2">
+            <label htmlFor={paintbrushWeightFieldId} className="inline-block">
+              Weight:
+            </label>
+            <input
+              id={paintbrushWeightFieldId}
+              className="bg-white text-black px-2 py-1 block w-full"
+              type="number"
+              value={values.cellPaintbrush.weight}
+              onChange={(e) => {
+                const value = parseInt(e.currentTarget.value);
+
+                setValues((draft) => {
+                  if (draft.cellPaintbrush.type === "weighted") {
+                    draft.cellPaintbrush.weight = !isNaN(value)
+                      ? value
+                      : ("" as unknown as number);
+                  }
+                });
+              }}
+            />
+            {validation.cellPaintbrush?.weight !== undefined && (
+              <span className="inline-block text-red-400">
+                {validation.cellPaintbrush.weight}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2">
         <label htmlFor={cellSizeFieldId} className="inline-block">
           Cell Size:

@@ -5,6 +5,10 @@
   @apply bg-gray-400 select-none;
 }
 
+.hex-grid-cell[data-wall="true"] {
+  @apply bg-black;
+}
+
 .hex-grid-cell::before,
 .hex-grid-cell::after {
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);

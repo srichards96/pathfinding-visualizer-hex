@@ -37,6 +37,9 @@ function App() {
     cellSize: 30,
     cellSpacing: 2,
     animationSpeed: 200,
+    cellPaintbrush: {
+      type: "wall",
+    },
   });
 
   const hexCellSizingData = useMemo(() => {
@@ -51,14 +54,51 @@ function App() {
     (e: MouseEvent, cell: HexGridCellType) => {
       const { x, y } = cell;
       if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
-        // TODO: make this action configurable - set start / target / n weight, etc...
-        setStartPosition({ x, y });
+        switch (formValues.cellPaintbrush.type) {
+          case "start":
+            setStartPosition({ x, y });
+            break;
+          case "target":
+            setTargetPosition({ x, y });
+            break;
+          case "empty":
+            setGrid((draft) => {
+              draft[y][x].weight = 0;
+              draft[y][x].wall = false;
+            });
+            break;
+          case "wall":
+            setGrid((draft) => {
+              draft[y][x].weight = 0;
+              draft[y][x].wall = true;
+            });
+            break;
+          case "weighted": {
+            const weight = formValues.cellPaintbrush.weight;
+            setGrid((draft) => {
+              draft[y][x].weight = weight;
+              draft[y][x].wall = false;
+            });
+            break;
+          }
+        }
       } else if (mouseButtonsHeld(e, MouseButtonFlags.right)) {
-        // TODO: after making left click action configurable, make this always clear the cell...
-        setTargetPosition({ x, y });
+        // Clear start position if selected
+        if (x === startPosition?.x && y === startPosition.y) {
+          setStartPosition(undefined);
+        }
+        // Clear target position if selected
+        if (x === targetPosition?.x && y === targetPosition.y) {
+          setTargetPosition(undefined);
+        }
+        // Clear weight/wall state
+        setGrid((draft) => {
+          draft[y][x].weight = 0;
+          draft[y][x].wall = false;
+        });
       }
     },
-    []
+    [setGrid, formValues.cellPaintbrush, startPosition, targetPosition]
   );
 
   // On load, and when cell sizing changes, resize grid to fit available space...

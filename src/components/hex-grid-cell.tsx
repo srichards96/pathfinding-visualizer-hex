@@ -41,6 +41,7 @@ export function HexGridCell({
   return (
     <div
       className="hex-grid-cell relative"
+      data-wall={cell.wall}
       data-visited={cell.visited}
       data-on-path={cell.onPath}
       style={{
@@ -52,10 +53,16 @@ export function HexGridCell({
       onMouseDown={(e) => onMouseDown(e, cell)}
       onMouseEnter={(e) => onMouseEnter(e, cell)}
     >
-      {(isStart || isTarget) && (
+      {(isStart || isTarget || cell.weight > 0) && (
         <span className="absolute left-1/2 top-1/2 -translate-1/2 z-10">
-          {isStart && "start"}
-          {isTarget && "target"}
+          {isStart || isTarget ? (
+            <>
+              {isStart && "start"}
+              {isTarget && "target"}
+            </>
+          ) : (
+            cell.weight
+          )}
         </span>
       )}
     </div>
