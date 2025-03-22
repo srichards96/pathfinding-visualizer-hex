@@ -1,14 +1,14 @@
-import { Fragment, MouseEvent, useCallback, useState } from "react";
-import { HexGridCell } from "./components/hex-grid-cell";
 import { makeHexGrid } from "./util/hex/make-hex-grid";
 import { HexGridWideRowTypes } from "./constants/hex/hex-grid-wide-row-types";
 import { breadthFirstSearch } from "./algorithms/breadth-first-search";
-import { map2d } from "./util/array/map-2d";
 import { useImmer } from "use-immer";
 import { HexGridPosition } from "./types/hex-grid-position";
 import { mouseButtonsHeld } from "./util/mouse-buttons-held";
 import { MouseButtonFlags } from "./constants/mouse-buttons";
 import { HexGridCellType } from "./types/hex-grid-cell-type";
+import { HexGrid } from "./components/hex-grid";
+import { useCallback, useState, MouseEvent, useMemo } from "react";
+import { calculateHexCellSizingData } from "./util/hex/calculate-hex-cell-sizing-data";
 
 const rows = 25;
 const cols = 8;
@@ -16,8 +16,19 @@ const wideRows = HexGridWideRowTypes.Even;
 
 function App() {
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
-  const [start, setStart] = useState<HexGridPosition>();
-  const [target, setTarget] = useState<HexGridPosition>();
+  const [startPosition, setStartPosition] = useState<HexGridPosition>();
+  const [targetPosition, setTargetPosition] = useState<HexGridPosition>();
+
+  // TODO: make variable via a form...
+  const [sideLength] = useState(30);
+  const [spacing] = useState(2);
+
+  const hexCellSizingData = useMemo(() => {
+    return calculateHexCellSizingData({
+      sideLength,
+      spacing,
+    });
+  }, [sideLength, spacing]);
 
   // Handler for both cell MouseDown and MouseEnter events...
   const onCellMouseEvent = useCallback(
@@ -25,10 +36,10 @@ function App() {
       const { x, y } = cell;
       if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
         // TODO: make this action configurable - set start / target / n weight, etc...
-        setStart({ x, y });
+        setStartPosition({ x, y });
       } else if (mouseButtonsHeld(e, MouseButtonFlags.right)) {
         // TODO: after making left click action configurable, make this always clear the cell...
-        setTarget({ x, y });
+        setTargetPosition({ x, y });
       }
     },
     []
@@ -38,7 +49,7 @@ function App() {
   function testBfs() {
     const animationSpeed = 100;
 
-    if (start === undefined || target === undefined) {
+    if (startPosition === undefined || targetPosition === undefined) {
       return;
     }
 
@@ -55,8 +66,8 @@ function App() {
 
     const { cellsTraversed, cellsOnPath } = breadthFirstSearch({
       grid,
-      start: grid[start.y][start.x],
-      target: grid[target.y][target.x],
+      start: grid[startPosition.y][startPosition.x],
+      target: grid[targetPosition.y][targetPosition.x],
       wideRows,
     });
 
@@ -88,29 +99,25 @@ function App() {
   }
 
   return (
-    <div>
-      <button className="border rounded-sm px-4 py-2" onClick={testBfs}>
-        Test BFS
-      </button>
+    <main className="flex h-screen relative">
+      <div className="flex-shrink-0 w-[300px] bg-gray-800 text-white p-2 space-y-4">
+        <h1 className="text-2xl font-bold">Pathfinding Visualizer Hex</h1>
 
-      <div className="h-screen relative">
-        {grid.map((row, rowI) => (
-          <Fragment key={rowI}>
-            {row.map((cell, colI) => (
-              <HexGridCell
-                key={`${rowI}-${colI}`}
-                cell={cell}
-                wideRows={wideRows}
-                onMouseDown={onCellMouseEvent}
-                onMouseEnter={onCellMouseEvent}
-                isStart={cell.x === start?.x && cell.y === start.y}
-                isTarget={cell.x === target?.x && cell.y === target.y}
-              />
-            ))}
-          </Fragment>
-        ))}
+        <button className="border rounded-sm px-4 py-2" onClick={testBfs}>
+          Test BFS
+        </button>
       </div>
-    </div>
+
+      <HexGrid
+        grid={grid}
+        wideRows={wideRows}
+        hexCellSizingData={hexCellSizingData}
+        startPosition={startPosition}
+        targetPosition={targetPosition}
+        onCellMouseDown={onCellMouseEvent}
+        onCellMouseEnter={onCellMouseEvent}
+      />
+    </main>
   );
 }
 
