@@ -17,6 +17,10 @@ import {
 } from "react";
 import { calculateHexCellSizingData } from "./util/hex/calculate-hex-cell-sizing-data";
 import { resizeHexGridToFitContainer } from "./util/hex/resize-hex-grid-to-fit-container";
+import {
+  OptionsForm,
+  PathfindingVisualerFormValues,
+} from "./components/options-form";
 
 const rows = 25;
 const cols = 8;
@@ -29,16 +33,18 @@ function App() {
 
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
-  // TODO: make variable via a form...
-  const [sideLength] = useState(30);
-  const [spacing] = useState(2);
+  const [formValues, setFormValues] = useState<PathfindingVisualerFormValues>({
+    cellSize: 30,
+    cellSpacing: 2,
+    animationSpeed: 200,
+  });
 
   const hexCellSizingData = useMemo(() => {
     return calculateHexCellSizingData({
-      sideLength,
-      spacing,
+      sideLength: formValues.cellSize,
+      spacing: formValues.cellSpacing,
     });
-  }, [sideLength, spacing]);
+  }, [formValues.cellSize, formValues.cellSpacing]);
 
   // Handler for both cell MouseDown and MouseEnter events...
   const onCellMouseEvent = useCallback(
@@ -97,8 +103,6 @@ function App() {
 
   // TODO: make this not suck...
   function testBfs() {
-    const animationSpeed = 100;
-
     if (startPosition === undefined || targetPosition === undefined) {
       return;
     }
@@ -129,11 +133,11 @@ function App() {
           draft[stepY][stepX].visited = true;
           return draft;
         });
-      }, i * animationSpeed);
+      }, i * formValues.animationSpeed);
     }
 
     if (cellsOnPath !== undefined) {
-      const timeoutOffset = cellsTraversed.length * animationSpeed;
+      const timeoutOffset = cellsTraversed.length * formValues.animationSpeed;
 
       for (let i = 0; i < cellsOnPath.length; i++) {
         const { x: stepX, y: stepY } = cellsOnPath[i];
@@ -143,7 +147,7 @@ function App() {
             draft[stepY][stepX].onPath = true;
             return draft;
           });
-        }, timeoutOffset + i * animationSpeed);
+        }, timeoutOffset + i * formValues.animationSpeed);
       }
     }
   }
@@ -156,6 +160,8 @@ function App() {
         <button className="border rounded-sm px-4 py-2" onClick={testBfs}>
           Test BFS
         </button>
+
+        <OptionsForm defaultValues={formValues} onSubmit={setFormValues} />
       </div>
 
       <HexGrid
