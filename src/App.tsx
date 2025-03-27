@@ -1,6 +1,5 @@
 import { makeHexGrid } from "./util/hex/make-hex-grid";
 import { HexGridWideRowTypes } from "./constants/hex/hex-grid-wide-row-types";
-import { breadthFirstSearch } from "./algorithms/breadth-first-search";
 import { useImmer } from "use-immer";
 import { HexGridPosition } from "./types/hex-grid-position";
 import { mouseButtonsHeld } from "./util/mouse-buttons-held";
@@ -21,10 +20,22 @@ import {
   OptionsForm,
   PathfindingVisualerFormValues,
 } from "./components/options-form";
+import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
+import { HexGridPathfindingAlgorithm } from "./types/hex-grid-pathfinding-algorithm";
 
 const rows = 25;
 const cols = 8;
 const wideRows = HexGridWideRowTypes.Even;
+
+const hexGridPathfindingAlgorithms = {
+  breadthFirstSearch: hexGridBreadthFirstSearch,
+  dijkstrasAlgorithm: () => {
+    throw "Not implemented...";
+  },
+  aStar: () => {
+    throw "Not implemented...";
+  },
+} as const satisfies Record<string, HexGridPathfindingAlgorithm>;
 
 function App() {
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
@@ -158,10 +169,13 @@ function App() {
       return draft;
     });
 
-    const { cellsTraversed, cellsOnPath } = breadthFirstSearch({
+    // TODO: make variable
+    const algorithm = hexGridPathfindingAlgorithms["breadthFirstSearch"];
+
+    const { cellsTraversed, cellsOnPath } = algorithm({
       grid,
-      start: grid[startPosition.y][startPosition.x],
-      target: grid[targetPosition.y][targetPosition.x],
+      start: startPosition,
+      target: targetPosition,
       wideRows,
     });
 

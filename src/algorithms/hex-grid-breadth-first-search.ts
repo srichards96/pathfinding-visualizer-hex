@@ -1,6 +1,5 @@
-import { HexGridWideRowType } from "../constants/hex/hex-grid-wide-row-types";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
-import { PathfindingResult } from "../types/pathfinding-data";
+import { HexGridPathfindingAlgorithm } from "../types/hex-grid-pathfinding-algorithm";
 import { map2d } from "../util/array/map-2d";
 import { getTraversal } from "../util/graph/get-traversal";
 import { getHexNeighbors } from "../util/hex/get-hex-neighbors";
@@ -13,18 +12,12 @@ type BFSNode = {
   parent: BFSNode | null;
 };
 
-type Options = {
-  grid: HexGridCellType[][];
-  start: HexGridCellType;
-  target: HexGridCellType;
-  wideRows: HexGridWideRowType;
-};
-export function breadthFirstSearch({
+export const hexGridBreadthFirstSearch: HexGridPathfindingAlgorithm = ({
   grid,
   start,
   target,
   wideRows,
-}: Options): PathfindingResult {
+}) => {
   const bfsGrid = map2d<HexGridCellType, BFSNode>(grid, ({ x, y, wall }) => ({
     x,
     y,
@@ -81,4 +74,4 @@ export function breadthFirstSearch({
     cellsTraversed: traversedNodes.map(({ x, y }) => ({ x, y })),
     cellsOnPath: path?.map(({ x, y }) => ({ x, y })),
   };
-}
+};

@@ -1,6 +1,6 @@
 import { HexGridPosition } from "./hex-grid-position";
 
-export type PathfindingResult = {
+export type HexGridPathfindingResult = {
   cellsTraversed: HexGridPosition[];
   cellsOnPath: HexGridPosition[] | undefined;
 };
