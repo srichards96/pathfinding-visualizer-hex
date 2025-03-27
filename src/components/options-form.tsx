@@ -1,4 +1,4 @@
-import { FormEvent, useId } from "react";
+import { useCallback, useEffect, useId } from "react";
 import { useImmer } from "use-immer";
 
 type CellPrainbrush =
@@ -37,7 +37,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
     useImmer<PathfindingVisualerFormValues>(defaultValues);
   const [validation, setValidation] = useImmer<FormValidation>({});
 
-  function validateValues() {
+  const validateValues = useCallback(() => {
     const { cellPaintbrush, cellSize, cellSpacing, animationSpeed } = values;
 
     let valid = true;
@@ -55,13 +55,14 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
       } else if (weight < 1) {
         setValidation((draft) => {
           draft.cellPaintbrush ??= {};
-          draft.cellSize = "Paintbrush Weight must be at least 1";
+          draft.cellPaintbrush.weight = "Paintbrush Weight must be at least 1";
         });
         valid = false;
-      } else if (cellSize > 1000) {
+      } else if (weight > 1000) {
         setValidation((draft) => {
           draft.cellPaintbrush ??= {};
-          draft.cellSize = "Plainbrush Weight must be at most 1000";
+          draft.cellPaintbrush.weight =
+            "Plainbrush Weight must be at most 1000";
         });
         valid = false;
       }
@@ -119,15 +120,14 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
     }
 
     return valid;
-  }
+  }, [values, setValidation]);
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-
+  // When input values change, validate them, and if valid update the real values
+  useEffect(() => {
     if (validateValues()) {
       onSubmit(values);
     }
-  }
+  }, [onSubmit, values, validateValues]);
 
   const paintbrushFieldName = useId();
   const paintbrushWeightFieldId = useId();
@@ -136,7 +136,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
   const animationSpeedFieldId = useId();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
       <div className="space-y-2 border p-2 rounded-sm relative">
         <h2 className="text-xl absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-gray-800 px-2">
           Paintbrush
@@ -144,82 +144,81 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
 
         <span className="inline-block mb-2">Type:</span>
 
-        <fieldset className="grid grid-cols-2">
-          <div className="space-y-1">
-            <label className="flex gap-2 items-center">
-              <input
-                name={paintbrushFieldName}
-                type="radio"
-                checked={values.cellPaintbrush.type === "empty"}
-                value="empty"
-                onChange={() =>
-                  setValues((draft) => {
-                    draft.cellPaintbrush = { type: "empty" };
-                  })
-                }
-              />
-              Empty
-            </label>
-            <label className="flex gap-2 items-center">
-              <input
-                name={paintbrushFieldName}
-                type="radio"
-                checked={values.cellPaintbrush.type === "wall"}
-                value="wall"
-                onChange={() =>
-                  setValues((draft) => {
-                    draft.cellPaintbrush = { type: "wall" };
-                  })
-                }
-              />
-              Wall
-            </label>
-            <label className="flex gap-2 items-center">
-              <input
-                name={paintbrushFieldName}
-                type="radio"
-                checked={values.cellPaintbrush.type === "weighted"}
-                value="weighted"
-                onChange={() =>
-                  setValues((draft) => {
-                    draft.cellPaintbrush = { type: "weighted", weight: 1 };
-                  })
-                }
-              />
-              Weighted
-            </label>
-          </div>
+        <fieldset className="grid grid-cols-2 gap-1">
+          <label className="flex gap-2 items-center">
+            <input
+              name={paintbrushFieldName}
+              type="radio"
+              checked={values.cellPaintbrush.type === "start"}
+              value="start"
+              onChange={() =>
+                setValues((draft) => {
+                  draft.cellPaintbrush = { type: "start" };
+                })
+              }
+            />
+            Start
+          </label>
 
-          <div className="space-y-1">
-            <label className="flex gap-2 items-center">
-              <input
-                name={paintbrushFieldName}
-                type="radio"
-                checked={values.cellPaintbrush.type === "start"}
-                value="start"
-                onChange={() =>
-                  setValues((draft) => {
-                    draft.cellPaintbrush = { type: "start" };
-                  })
-                }
-              />
-              Start
-            </label>
-            <label className="flex gap-2 items-center">
-              <input
-                name={paintbrushFieldName}
-                type="radio"
-                checked={values.cellPaintbrush.type === "target"}
-                value="target"
-                onChange={() =>
-                  setValues((draft) => {
-                    draft.cellPaintbrush = { type: "target" };
-                  })
-                }
-              />
-              Target
-            </label>
-          </div>
+          <label className="flex gap-2 items-center">
+            <input
+              name={paintbrushFieldName}
+              type="radio"
+              checked={values.cellPaintbrush.type === "target"}
+              value="target"
+              onChange={() =>
+                setValues((draft) => {
+                  draft.cellPaintbrush = { type: "target" };
+                })
+              }
+            />
+            Target
+          </label>
+
+          <label className="flex gap-2 items-center">
+            <input
+              name={paintbrushFieldName}
+              type="radio"
+              checked={values.cellPaintbrush.type === "empty"}
+              value="empty"
+              onChange={() =>
+                setValues((draft) => {
+                  draft.cellPaintbrush = { type: "empty" };
+                })
+              }
+            />
+            Empty
+          </label>
+
+          <label className="flex gap-2 items-center">
+            <input
+              name={paintbrushFieldName}
+              type="radio"
+              checked={values.cellPaintbrush.type === "wall"}
+              value="wall"
+              onChange={() =>
+                setValues((draft) => {
+                  draft.cellPaintbrush = { type: "wall" };
+                })
+              }
+            />
+            Wall
+          </label>
+
+          <label className="flex gap-2 items-center">
+            <input
+              name={paintbrushFieldName}
+              type="radio"
+              checked={values.cellPaintbrush.type === "weighted"}
+              value="weighted"
+              onChange={() =>
+                setValues((draft) => {
+                  draft.cellPaintbrush = { type: "weighted", weight: 1 };
+                })
+              }
+            />
+            Weighted
+          </label>
         </fieldset>
 
         {values.cellPaintbrush.type === "weighted" && (
@@ -231,6 +230,8 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               id={paintbrushWeightFieldId}
               className="bg-white text-black px-2 py-1 block w-full"
               type="number"
+              min={1}
+              max={1000}
               value={values.cellPaintbrush.weight}
               onChange={(e) => {
                 const value = parseInt(e.currentTarget.value);
@@ -261,6 +262,8 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
           id={cellSizeFieldId}
           className="bg-white text-black px-2 py-1 block w-full"
           type="number"
+          min={20}
+          max={80}
           value={values.cellSize}
           onChange={(e) => {
             const value = parseInt(e.currentTarget.value);
@@ -285,6 +288,8 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
           id={cellSpacingFieldId}
           className="bg-white text-black px-2 py-1 block w-full"
           type="number"
+          min={1}
+          max={16}
           value={values.cellSpacing}
           onChange={(e) => {
             const value = parseInt(e.currentTarget.value);
@@ -309,6 +314,8 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
           id={animationSpeedFieldId}
           className="bg-white text-black px-2 py-1 block w-full"
           type="number"
+          min={50}
+          max={1000}
           value={values.animationSpeed}
           onChange={(e) => {
             const value = parseInt(e.currentTarget.value);
@@ -325,22 +332,6 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
             {validation.animationSpeed}
           </span>
         )}
-      </div>
-
-      <div className="flex justify-between">
-        <button
-          type="button"
-          className="border px-4 py-2 rounded-sm transition-colors hover:bg-white/5 focus:bg-white/5 active:bg-white/10"
-          onClick={() => setValues(defaultValues)}
-        >
-          Reset
-        </button>
-        <button
-          type="submit"
-          className="border border-violet-500 px-4 py-2 rounded-sm transition-colors bg-violet-800 hover:bg-violet-700 focus:bg-violet-700 active:bg-violet-600"
-        >
-          Apply
-        </button>
       </div>
     </form>
   );
