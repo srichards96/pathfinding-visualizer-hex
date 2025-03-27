@@ -20,14 +20,11 @@ import {
   OptionsForm,
   PathfindingVisualerFormValues,
 } from "./components/options-form";
-import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
+import { HexGridPathfindingAlgorithmName } from "./constants/hex/hex-grid-pathfinding-algorithms";
 import { HexGridPathfindingAlgorithm } from "./types/hex-grid-pathfinding-algorithm";
+import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
 
-const rows = 25;
-const cols = 8;
-const wideRows = HexGridWideRowTypes.Even;
-
-const hexGridPathfindingAlgorithms = {
+const HexGridPathfindingAlgorithms = {
   breadthFirstSearch: hexGridBreadthFirstSearch,
   dijkstrasAlgorithm: () => {
     throw "Not implemented...";
@@ -35,7 +32,14 @@ const hexGridPathfindingAlgorithms = {
   aStar: () => {
     throw "Not implemented...";
   },
-} as const satisfies Record<string, HexGridPathfindingAlgorithm>;
+} as const satisfies Record<
+  HexGridPathfindingAlgorithmName,
+  HexGridPathfindingAlgorithm
+>;
+
+const rows = 25;
+const cols = 8;
+const wideRows = HexGridWideRowTypes.Even;
 
 function App() {
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
@@ -51,6 +55,7 @@ function App() {
     cellPaintbrush: {
       type: "wall",
     },
+    algorithm: "breadthFirstSearch",
   });
 
   const hexCellSizingData = useMemo(() => {
@@ -170,7 +175,7 @@ function App() {
     });
 
     // TODO: make variable
-    const algorithm = hexGridPathfindingAlgorithms["breadthFirstSearch"];
+    const algorithm = HexGridPathfindingAlgorithms[formValues.algorithm];
 
     const { cellsTraversed, cellsOnPath } = algorithm({
       grid,

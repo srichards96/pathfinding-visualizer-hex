@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useId } from "react";
 import { useImmer } from "use-immer";
+import {
+  HexGridPathfindingAlgorithmName,
+  HexGridPathfindingAlgorithmNames,
+} from "../constants/hex/hex-grid-pathfinding-algorithms";
+
+const hexGridPathfindingAlgorithmNamesSet = new Set<string>(
+  Object.values(HexGridPathfindingAlgorithmNames)
+);
 
 type CellPrainbrush =
   | {
@@ -15,6 +23,7 @@ export type PathfindingVisualerFormValues = {
   cellSpacing: number;
   animationSpeed: number;
   cellPaintbrush: CellPrainbrush;
+  algorithm: HexGridPathfindingAlgorithmName;
 };
 
 type FormValidation = {
@@ -25,6 +34,7 @@ type FormValidation = {
     type?: string;
     weight?: string;
   };
+  algorithm?: string;
 };
 
 type Props = {
@@ -134,6 +144,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
   const cellSizeFieldId = useId();
   const cellSpacingFieldId = useId();
   const animationSpeedFieldId = useId();
+  const algorithmFieldId = useId();
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
@@ -332,6 +343,36 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
             {validation.animationSpeed}
           </span>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor={algorithmFieldId} className="inline-block">
+          Algorithm:
+        </label>
+        <select
+          id={algorithmFieldId}
+          className="bg-white text-black px-2 py-1 block w-full"
+          value={values.algorithm}
+          onChange={(e) => {
+            const { value } = e.currentTarget;
+
+            if (
+              hexGridPathfindingAlgorithmNamesSet.has(e.currentTarget.value)
+            ) {
+              setValues((draft) => {
+                draft.algorithm = value as HexGridPathfindingAlgorithmName;
+              });
+            }
+          }}
+        >
+          <option value={HexGridPathfindingAlgorithmNames.breadthFirstSearch}>
+            Breadth First Search
+          </option>
+          <option value={HexGridPathfindingAlgorithmNames.dijkstrasAlgorithm}>
+            Dijkstra's Algorithm
+          </option>
+          <option value={HexGridPathfindingAlgorithmNames.aStar}>A*</option>
+        </select>
       </div>
     </form>
   );
