@@ -23,12 +23,11 @@ import {
 import { HexGridPathfindingAlgorithmName } from "./constants/hex/hex-grid-pathfinding-algorithms";
 import { HexGridPathfindingAlgorithm } from "./types/hex-grid-pathfinding-algorithm";
 import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
+import { hexGridDijkstrasAlgorithm } from "./algorithms/hex-grid-dijkstras-algorithm";
 
 const HexGridPathfindingAlgorithms = {
   breadthFirstSearch: hexGridBreadthFirstSearch,
-  dijkstrasAlgorithm: () => {
-    throw "Not implemented...";
-  },
+  dijkstrasAlgorithm: hexGridDijkstrasAlgorithm,
   aStar: () => {
     throw "Not implemented...";
   },

@@ -33,7 +33,7 @@ export function makeHexGrid({ rows, cols, wideRows }: Options) {
       row.push({
         x,
         y,
-        weight: 0,
+        weight: 1,
         visited: false,
         onPath: false,
         wall: false,
