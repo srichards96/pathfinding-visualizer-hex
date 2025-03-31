@@ -3,19 +3,19 @@ import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { HexGridPathfindingAlgorithm } from "../types/hex-grid-pathfinding-algorithm";
 import { map2d } from "../util/array/map-2d";
 import { getTraversal } from "../util/graph/get-traversal";
+import { getHexGridTaxicabDistance } from "../util/hex/get-hex-grid-taxicab-distance";
 import { getHexNeighbors } from "../util/hex/get-hex-neighbors";
 
-type DijkstrasNode = {
+type AStarNode = {
   id: number;
   x: number;
   y: number;
   wall: boolean;
   weight: number;
-  visited: boolean;
-  parent: DijkstrasNode | null;
+  parent: AStarNode | null;
 };
 
-export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
+export const hexGridAStarSearch: HexGridPathfindingAlgorithm = ({
   grid,
   start,
   target,
@@ -24,7 +24,7 @@ export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
   let id = 0;
   let neighborCounter = 0;
 
-  const dijkstrasGrid = map2d<HexGridCellType, DijkstrasNode>(
+  const aStarGrid = map2d<HexGridCellType, AStarNode>(
     grid,
     ({ x, y, wall, weight }) => ({
       id: id++,
@@ -32,23 +32,29 @@ export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
       y,
       wall,
       weight,
-      visited: false,
       parent: null,
     })
   );
 
-  const traversedNodes: DijkstrasNode[] = [];
-  let endNode: DijkstrasNode | null = null;
+  const traversedNodes: AStarNode[] = [];
+  let endNode: AStarNode | null = null;
+
+  // Tracks distance of node from start
+  const gScore = new Map<number, number>();
+  gScore.set(aStarGrid[start.y][start.x].id, 0);
 
   // Create priority queue and add start position to it
+  // Priority is an estimate of distance between start and target (going though specific node)
   const priorityQueue = new PriorityQueue({
-    getKeyFn: (item: DijkstrasNode) => item.id,
+    getKeyFn: (item: AStarNode) => item.id,
   });
-  dijkstrasGrid[start.y][start.x].visited = true;
-  priorityQueue.add(dijkstrasGrid[start.y][start.x], 0);
+  priorityQueue.add(
+    aStarGrid[start.y][start.x],
+    getHexGridTaxicabDistance({ point1: start, point2: target, wideRows })
+  );
 
   while (priorityQueue.size > 0) {
-    const { data: curr, priority: currDistance } = priorityQueue.pull()!;
+    const { data: curr } = priorityQueue.pull()!;
 
     traversedNodes.push(curr);
 
@@ -60,7 +66,7 @@ export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
 
     // Otherwise queue up unvisited neighbors
     const neighbors = getHexNeighbors({
-      grid: dijkstrasGrid,
+      grid: aStarGrid,
       x: curr.x,
       y: curr.y,
       wideRows,
@@ -71,7 +77,11 @@ export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
       .filter((x) => x.wall === false);
 
     for (const neighbor of neighbors) {
-      if (!neighbor.visited) {
+      const currGScore = gScore.get(curr.id) ?? Infinity;
+      const neighborGScore = gScore.get(neighbor.id) ?? Infinity;
+      const tentativeGScore = currGScore + neighbor.weight;
+
+      if (tentativeGScore < neighborGScore) {
         // This offset isn't necessary.
         // It's a hack that makes it so that the nodes with equal distance are visited in the
         //   same order that they were added in (top, top-right, bottom-right, bottom, bottom-left, top-left)
@@ -85,10 +95,24 @@ export const hexGridDijkstrasAlgorithm: HexGridPathfindingAlgorithm = ({
         // This doesn't interfere with the search because weights are always integers
         const offset = neighborCounter++ * 0.0000001;
 
-        const priority = Math.floor(currDistance) + neighbor.weight;
-        neighbor.visited = true;
         neighbor.parent = curr;
-        priorityQueue.add(neighbor, priority + offset);
+
+        gScore.set(neighbor.id, tentativeGScore);
+
+        // Priority is how far the neighbor is from the target
+        const priority =
+          tentativeGScore +
+          getHexGridTaxicabDistance({
+            point1: neighbor,
+            point2: target,
+            wideRows,
+          });
+
+        if (priorityQueue.has(neighbor.id)) {
+          priorityQueue.setPriority(neighbor.id, priority + offset);
+        } else {
+          priorityQueue.add(neighbor, priority + offset);
+        }
       }
     }
   }

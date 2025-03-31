@@ -24,13 +24,12 @@ import { HexGridPathfindingAlgorithmName } from "./constants/hex/hex-grid-pathfi
 import { HexGridPathfindingAlgorithm } from "./types/hex-grid-pathfinding-algorithm";
 import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
 import { hexGridDijkstrasAlgorithm } from "./algorithms/hex-grid-dijkstras-algorithm";
+import { hexGridAStarSearch } from "./algorithms/hex-grid-a-star-search";
 
 const HexGridPathfindingAlgorithms = {
   breadthFirstSearch: hexGridBreadthFirstSearch,
   dijkstrasAlgorithm: hexGridDijkstrasAlgorithm,
-  aStar: () => {
-    throw "Not implemented...";
-  },
+  aStar: hexGridAStarSearch,
 } as const satisfies Record<
   HexGridPathfindingAlgorithmName,
   HexGridPathfindingAlgorithm

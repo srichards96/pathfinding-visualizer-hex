@@ -40,7 +40,7 @@ export class PriorityQueue<TItem, TKey extends number | string> {
   private keyToIndex(key: TKey) {
     const index = this.keyToIndexMap.get(key);
     if (index === undefined) {
-      throw `No index eixsts for key '${key}'`;
+      throw `No index exists for key '${key}'`;
     }
     return index;
   }
@@ -197,6 +197,10 @@ export class PriorityQueue<TItem, TKey extends number | string> {
     } else {
       this.heapifyDown(index);
     }
+  }
+
+  public has(key: TKey) {
+    return this.keyToIndexMap.has(key);
   }
 
   get size() {
