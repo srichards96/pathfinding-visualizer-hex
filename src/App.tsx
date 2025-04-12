@@ -20,29 +20,23 @@ import {
   OptionsForm,
   PathfindingVisualerFormValues,
 } from "./components/options-form";
-import { HexGridPathfindingAlgorithmName } from "./constants/hex/hex-grid-pathfinding-algorithms";
-import { HexGridPathfindingAlgorithm } from "./types/hex-grid-pathfinding-algorithm";
-import { hexGridBreadthFirstSearch } from "./algorithms/hex-grid-breadth-first-search";
-import { hexGridDijkstrasAlgorithm } from "./algorithms/hex-grid-dijkstras-algorithm";
-import { hexGridAStarSearch } from "./algorithms/hex-grid-a-star-search";
-
-const HexGridPathfindingAlgorithms = {
-  breadthFirstSearch: hexGridBreadthFirstSearch,
-  dijkstrasAlgorithm: hexGridDijkstrasAlgorithm,
-  aStar: hexGridAStarSearch,
-} as const satisfies Record<
-  HexGridPathfindingAlgorithmName,
-  HexGridPathfindingAlgorithm
->;
+import { calculateHexGridPathfind } from "./util/hex/calculate-hex-grid-pathfind";
+import { HexGridPathfindingResult } from "./types/hex-grid-pathfinding-result";
+import { produce } from "immer";
 
 const rows = 25;
 const cols = 8;
 const wideRows = HexGridWideRowTypes.Even;
 
 function App() {
+  // Whether pathfind is currently being animated
+  const [isRunning, setIsRunning] = useState(false);
+  // Whether pathfind has been run (and not been reset)
+  const [hasRun, setHasRun] = useState(false);
+
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
-  const [startPosition, setStartPosition] = useState<HexGridPosition>();
-  const [targetPosition, setTargetPosition] = useState<HexGridPosition>();
+  const [start, setStart] = useState<HexGridPosition>();
+  const [target, setTarget] = useState<HexGridPosition>();
 
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
@@ -62,58 +56,6 @@ function App() {
       spacing: formValues.cellSpacing,
     });
   }, [formValues.cellSize, formValues.cellSpacing]);
-
-  // Handler for both cell MouseDown and MouseEnter events...
-  const onCellMouseEvent = useCallback(
-    (e: MouseEvent, cell: HexGridCellType) => {
-      const { x, y } = cell;
-      if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
-        switch (formValues.cellPaintbrush.type) {
-          case "start":
-            setStartPosition({ x, y });
-            break;
-          case "target":
-            setTargetPosition({ x, y });
-            break;
-          case "empty":
-            setGrid((draft) => {
-              draft[y][x].weight = 0;
-              draft[y][x].wall = false;
-            });
-            break;
-          case "wall":
-            setGrid((draft) => {
-              draft[y][x].weight = 0;
-              draft[y][x].wall = true;
-            });
-            break;
-          case "weighted": {
-            const weight = formValues.cellPaintbrush.weight;
-            setGrid((draft) => {
-              draft[y][x].weight = weight;
-              draft[y][x].wall = false;
-            });
-            break;
-          }
-        }
-      } else if (mouseButtonsHeld(e, MouseButtonFlags.right)) {
-        // Clear start position if selected
-        if (x === startPosition?.x && y === startPosition.y) {
-          setStartPosition(undefined);
-        }
-        // Clear target position if selected
-        if (x === targetPosition?.x && y === targetPosition.y) {
-          setTargetPosition(undefined);
-        }
-        // Clear weight/wall state
-        setGrid((draft) => {
-          draft[y][x].weight = 0;
-          draft[y][x].wall = false;
-        });
-      }
-    },
-    [setGrid, formValues.cellPaintbrush, startPosition, targetPosition]
-  );
 
   // On load, and when cell sizing changes, resize grid to fit available space...
   useEffect(() => {
@@ -155,13 +97,7 @@ function App() {
     return () => window.removeEventListener("resize", onResize);
   }, [hexCellSizingData, setGrid]);
 
-  // TODO: make this not suck...
-  function testBfs() {
-    if (startPosition === undefined || targetPosition === undefined) {
-      return;
-    }
-
-    // Reset previous pathfind state/animations...
+  const clearPathfind = useCallback(() => {
     setGrid((draft) => {
       for (const row of draft) {
         for (const cell of row) {
@@ -169,20 +105,48 @@ function App() {
           cell.onPath = false;
         }
       }
-      return draft;
     });
 
-    // TODO: make variable
-    const algorithm = HexGridPathfindingAlgorithms[formValues.algorithm];
+    setHasRun(false);
+  }, [setGrid]);
 
-    const { cellsTraversed, cellsOnPath } = algorithm({
-      grid,
-      start: startPosition,
-      target: targetPosition,
-      wideRows,
-    });
+  // Applies pathfind to grid immediately
+  const applyPathfind = useCallback(
+    ({ cellsTraversed, cellsOnPath }: HexGridPathfindingResult) => {
+      setHasRun(true);
+
+      setGrid((draft) => {
+        for (const { x, y } of cellsTraversed) {
+          draft[y][x].visited = true;
+        }
+      });
+
+      setGrid((draft) => {
+        if (cellsOnPath === undefined) {
+          return;
+        }
+
+        for (const { x, y } of cellsOnPath) {
+          draft[y][x].onPath = true;
+        }
+      });
+    },
+    [setGrid]
+  );
+
+  // Applies pathfind to grid over time, with each step having a delay
+  function applyPathfindWithAnimation({
+    cellsTraversed,
+    cellsOnPath,
+  }: HexGridPathfindingResult) {
+    setIsRunning(true);
+    setHasRun(true);
+
+    const hasPath = cellsOnPath !== undefined;
 
     for (let i = 0; i < cellsTraversed.length; i++) {
+      const isLast = i === cellsTraversed.length - 1;
+
       const { x: stepX, y: stepY } = cellsTraversed[i];
 
       setTimeout(() => {
@@ -190,13 +154,19 @@ function App() {
           draft[stepY][stepX].visited = true;
           return draft;
         });
+
+        if (isLast && !hasPath) {
+          setIsRunning(false);
+        }
       }, i * formValues.animationSpeed);
     }
 
-    if (cellsOnPath !== undefined) {
+    if (hasPath) {
       const timeoutOffset = cellsTraversed.length * formValues.animationSpeed;
 
       for (let i = 0; i < cellsOnPath.length; i++) {
+        const isLast = i === cellsOnPath.length - 1;
+
         const { x: stepX, y: stepY } = cellsOnPath[i];
 
         setTimeout(() => {
@@ -204,8 +174,120 @@ function App() {
             draft[stepY][stepX].onPath = true;
             return draft;
           });
+
+          if (isLast) {
+            setIsRunning(false);
+          }
         }, timeoutOffset + i * formValues.animationSpeed);
       }
+    }
+  }
+
+  // Handler for both cell MouseDown and MouseEnter events...
+  const onCellMouseEvent = useCallback(
+    (e: MouseEvent, cell: HexGridCellType) => {
+      if (isRunning) {
+        return;
+      }
+
+      let nextGrid = grid;
+      let nextStart = start;
+      let nextTarget = target;
+
+      const { x, y } = cell;
+      if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
+        switch (formValues.cellPaintbrush.type) {
+          case "start":
+            nextStart = { x, y };
+            break;
+          case "target":
+            nextTarget = { x, y };
+            break;
+          case "empty":
+            nextGrid = produce(grid, (draft) => {
+              draft[y][x].weight = 1;
+              draft[y][x].wall = false;
+            });
+            break;
+          case "wall":
+            nextGrid = produce(grid, (draft) => {
+              draft[y][x].weight = 1;
+              draft[y][x].wall = true;
+            });
+            break;
+          case "weighted": {
+            const weight = formValues.cellPaintbrush.weight;
+            nextGrid = produce(grid, (draft) => {
+              draft[y][x].weight = weight;
+              draft[y][x].wall = false;
+            });
+            break;
+          }
+        }
+      } else if (mouseButtonsHeld(e, MouseButtonFlags.right)) {
+        // Clear start position if selected
+        if (x === start?.x && y === start.y) {
+          nextStart = undefined;
+        }
+        // Clear target position if selected
+        if (x === target?.x && y === target.y) {
+          nextTarget = undefined;
+        }
+        // Clear weight/wall state
+        nextGrid = produce(grid, (draft) => {
+          draft[y][x].weight = 1;
+          draft[y][x].wall = false;
+        });
+      }
+
+      setStart(nextStart);
+      setTarget(nextTarget);
+      setGrid(nextGrid);
+
+      if (hasRun) {
+        const pathfind = calculateHexGridPathfind({
+          grid,
+          start,
+          target,
+          algorithmName: formValues.algorithm,
+          wideRows,
+        });
+        clearPathfind();
+
+        if (pathfind !== undefined) {
+          applyPathfind(pathfind);
+        }
+      }
+    },
+    [
+      setGrid,
+      grid,
+      start,
+      target,
+      formValues,
+      isRunning,
+      hasRun,
+      clearPathfind,
+      applyPathfind,
+    ]
+  );
+
+  function onPathfindButtonClicked() {
+    if (isRunning) {
+      return;
+    }
+
+    const pathfindResult = calculateHexGridPathfind({
+      grid,
+      start: start,
+      target: target,
+      algorithmName: formValues.algorithm,
+      wideRows,
+    });
+
+    if (pathfindResult !== undefined) {
+      clearPathfind();
+      applyPathfindWithAnimation(pathfindResult);
     }
   }
 
@@ -214,9 +296,25 @@ function App() {
       <div className="flex-shrink-0 w-[300px] bg-gray-800 text-white p-2 space-y-4">
         <h1 className="text-2xl font-bold">Pathfinding Visualizer Hex</h1>
 
-        <button className="border rounded-sm px-4 py-2" onClick={testBfs}>
-          Test BFS
-        </button>
+        <div className="flex gap-2 justify-between">
+          <button
+            className="border rounded-sm px-4 py-2"
+            disabled={isRunning}
+            onClick={onPathfindButtonClicked}
+          >
+            Animate Pathfind
+          </button>
+
+          {hasRun && !isRunning && (
+            <button
+              className="border rounded-sm px-4 py-2"
+              disabled={isRunning}
+              onClick={clearPathfind}
+            >
+              Reset
+            </button>
+          )}
+        </div>
 
         <OptionsForm defaultValues={formValues} onSubmit={setFormValues} />
       </div>
@@ -226,8 +324,8 @@ function App() {
         grid={grid}
         wideRows={wideRows}
         hexCellSizingData={hexCellSizingData}
-        startPosition={startPosition}
-        targetPosition={targetPosition}
+        startPosition={start}
+        targetPosition={target}
         onCellMouseDown={onCellMouseEvent}
         onCellMouseEnter={onCellMouseEvent}
       />
