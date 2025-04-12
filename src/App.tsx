@@ -27,7 +27,7 @@ import { produce } from "immer";
 const rows = 25;
 const cols = 8;
 const wideRows = HexGridWideRowTypes.Even;
-const animateSpeed = 5000; // How long css animations are when animating pathfind
+const animateSpeed = 1000; // How long css animations are when animating pathfind
 
 function App() {
   // Whether pathfind is currently being animated
@@ -38,6 +38,8 @@ function App() {
   const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
   const [start, setStart] = useState<HexGridPosition>();
   const [target, setTarget] = useState<HexGridPosition>();
+
+  const [timeoutHandles, setTimeoutHandles] = useState<number[]>([]);
 
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +101,10 @@ function App() {
   }, [hexCellSizingData, setGrid]);
 
   const clearPathfind = useCallback(() => {
+    for (const handle of timeoutHandles) {
+      clearTimeout(handle);
+    }
+
     setGrid((draft) => {
       for (const row of draft) {
         for (const cell of row) {
@@ -109,7 +115,9 @@ function App() {
     });
 
     setHasRun(false);
-  }, [setGrid]);
+    setIsRunningAnimation(false);
+    setTimeoutHandles([]);
+  }, [timeoutHandles, setGrid]);
 
   // Applies pathfind to grid immediately
   const applyPathfind = useCallback(
@@ -143,6 +151,8 @@ function App() {
     setIsRunningAnimation(true);
     setHasRun(true);
 
+    const handles = [];
+
     // How long it takes for all cellsTravered timeouts to resolve
     const pathTimeoutOffset = cellsTraversed.length * formValues.animationSpeed;
     // How long it takes for all timeouts to resolve
@@ -153,31 +163,36 @@ function App() {
     for (let i = 0; i < cellsTraversed.length; i++) {
       const { x: stepX, y: stepY } = cellsTraversed[i];
 
-      setTimeout(() => {
+      const handle = setTimeout(() => {
         setGrid((draft) => {
           draft[stepY][stepX].visited = true;
           return draft;
         });
       }, i * formValues.animationSpeed);
+      handles.push(handle);
     }
 
     if (cellsOnPath !== undefined) {
       for (let i = 0; i < cellsOnPath.length; i++) {
         const { x: stepX, y: stepY } = cellsOnPath[i];
 
-        setTimeout(() => {
+        const handle = setTimeout(() => {
           setGrid((draft) => {
             draft[stepY][stepX].onPath = true;
             return draft;
           });
         }, pathTimeoutOffset + i * formValues.animationSpeed);
+        handles.push(handle);
       }
     }
 
     // Allow time for last cell animation...
-    setTimeout(() => {
+    const handle = setTimeout(() => {
       setIsRunningAnimation(false);
     }, endTimeoutOffset + animateSpeed);
+    handles.push(handle);
+
+    setTimeoutHandles(handles);
   }
 
   // Handler for both cell MouseDown and MouseEnter events...
@@ -269,7 +284,7 @@ function App() {
     ]
   );
 
-  function onPathfindButtonClicked() {
+  function onAnimatePathfindButtonClicked() {
     if (isRunningAnimation) {
       return;
     }
@@ -287,6 +302,21 @@ function App() {
       applyPathfindWithAnimation(pathfindResult);
     }
   }
+  function onSkipPathfindButtonClicked() {
+    clearPathfind();
+
+    const pathfindResult = calculateHexGridPathfind({
+      grid,
+      start: start,
+      target: target,
+      algorithmName: formValues.algorithm,
+      wideRows,
+    });
+
+    if (pathfindResult !== undefined) {
+      applyPathfind(pathfindResult);
+    }
+  }
 
   return (
     <main className="flex h-screen relative">
@@ -294,13 +324,30 @@ function App() {
         <h1 className="text-2xl font-bold">Pathfinding Visualizer Hex</h1>
 
         <div className="flex gap-2 justify-between">
-          <button
-            className="border rounded-sm px-4 py-2"
-            disabled={isRunningAnimation}
-            onClick={onPathfindButtonClicked}
-          >
-            Animate Pathfind
-          </button>
+          {!isRunningAnimation && (
+            <button
+              className="border rounded-sm px-4 py-2"
+              onClick={onAnimatePathfindButtonClicked}
+            >
+              Animate Pathfind
+            </button>
+          )}
+          {isRunningAnimation && (
+            <>
+              <button
+                className="border rounded-sm px-4 py-2"
+                onClick={onSkipPathfindButtonClicked}
+              >
+                Skip
+              </button>
+              <button
+                className="border rounded-sm px-4 py-2"
+                onClick={clearPathfind}
+              >
+                Cancel
+              </button>
+            </>
+          )}
 
           {hasRun && !isRunningAnimation && (
             <button
