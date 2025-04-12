@@ -243,9 +243,9 @@ function App() {
 
       if (hasRun) {
         const pathfind = calculateHexGridPathfind({
-          grid,
-          start,
-          target,
+          grid: nextGrid,
+          start: nextStart,
+          target: nextTarget,
           algorithmName: formValues.algorithm,
           wideRows,
         });
