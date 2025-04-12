@@ -27,10 +27,11 @@ import { produce } from "immer";
 const rows = 25;
 const cols = 8;
 const wideRows = HexGridWideRowTypes.Even;
+const animateSpeed = 5000; // How long css animations are when animating pathfind
 
 function App() {
   // Whether pathfind is currently being animated
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunningAnimation, setIsRunningAnimation] = useState(false);
   // Whether pathfind has been run (and not been reset)
   const [hasRun, setHasRun] = useState(false);
 
@@ -139,14 +140,17 @@ function App() {
     cellsTraversed,
     cellsOnPath,
   }: HexGridPathfindingResult) {
-    setIsRunning(true);
+    setIsRunningAnimation(true);
     setHasRun(true);
 
-    const hasPath = cellsOnPath !== undefined;
+    // How long it takes for all cellsTravered timeouts to resolve
+    const pathTimeoutOffset = cellsTraversed.length * formValues.animationSpeed;
+    // How long it takes for all timeouts to resolve
+    const endTimeoutOffset =
+      (cellsTraversed.length + (cellsOnPath?.length ?? 0)) *
+      formValues.animationSpeed;
 
     for (let i = 0; i < cellsTraversed.length; i++) {
-      const isLast = i === cellsTraversed.length - 1;
-
       const { x: stepX, y: stepY } = cellsTraversed[i];
 
       setTimeout(() => {
@@ -154,19 +158,11 @@ function App() {
           draft[stepY][stepX].visited = true;
           return draft;
         });
-
-        if (isLast && !hasPath) {
-          setIsRunning(false);
-        }
       }, i * formValues.animationSpeed);
     }
 
-    if (hasPath) {
-      const timeoutOffset = cellsTraversed.length * formValues.animationSpeed;
-
+    if (cellsOnPath !== undefined) {
       for (let i = 0; i < cellsOnPath.length; i++) {
-        const isLast = i === cellsOnPath.length - 1;
-
         const { x: stepX, y: stepY } = cellsOnPath[i];
 
         setTimeout(() => {
@@ -174,19 +170,20 @@ function App() {
             draft[stepY][stepX].onPath = true;
             return draft;
           });
-
-          if (isLast) {
-            setIsRunning(false);
-          }
-        }, timeoutOffset + i * formValues.animationSpeed);
+        }, pathTimeoutOffset + i * formValues.animationSpeed);
       }
     }
+
+    // Allow time for last cell animation...
+    setTimeout(() => {
+      setIsRunningAnimation(false);
+    }, endTimeoutOffset + animateSpeed);
   }
 
   // Handler for both cell MouseDown and MouseEnter events...
   const onCellMouseEvent = useCallback(
     (e: MouseEvent, cell: HexGridCellType) => {
-      if (isRunning) {
+      if (isRunningAnimation) {
         return;
       }
 
@@ -265,7 +262,7 @@ function App() {
       start,
       target,
       formValues,
-      isRunning,
+      isRunningAnimation,
       hasRun,
       clearPathfind,
       applyPathfind,
@@ -273,7 +270,7 @@ function App() {
   );
 
   function onPathfindButtonClicked() {
-    if (isRunning) {
+    if (isRunningAnimation) {
       return;
     }
 
@@ -299,16 +296,16 @@ function App() {
         <div className="flex gap-2 justify-between">
           <button
             className="border rounded-sm px-4 py-2"
-            disabled={isRunning}
+            disabled={isRunningAnimation}
             onClick={onPathfindButtonClicked}
           >
             Animate Pathfind
           </button>
 
-          {hasRun && !isRunning && (
+          {hasRun && !isRunningAnimation && (
             <button
               className="border rounded-sm px-4 py-2"
-              disabled={isRunning}
+              disabled={isRunningAnimation}
               onClick={clearPathfind}
             >
               Reset
@@ -326,6 +323,8 @@ function App() {
         hexCellSizingData={hexCellSizingData}
         startPosition={start}
         targetPosition={target}
+        isRunningAnimation={isRunningAnimation}
+        animationSpeed={animateSpeed}
         onCellMouseDown={onCellMouseEvent}
         onCellMouseEnter={onCellMouseEvent}
       />

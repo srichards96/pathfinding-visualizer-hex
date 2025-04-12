@@ -1,4 +1,4 @@
-import { Fragment, MouseEvent, Ref } from "react";
+import { Fragment, MouseEvent, RefObject, useEffect } from "react";
 import { HexGridWideRowType } from "../constants/hex/hex-grid-wide-row-types";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { HexGridCell } from "./hex-grid-cell";
@@ -6,12 +6,14 @@ import { HexGridPosition } from "../types/hex-grid-position";
 import { HexGridCellSizingData } from "../types/hex-grid-cell-sizing-data";
 
 type Props = {
-  ref?: Ref<HTMLDivElement>;
+  ref?: RefObject<HTMLDivElement | null>;
   grid: HexGridCellType[][];
   wideRows: HexGridWideRowType;
   hexCellSizingData: HexGridCellSizingData;
   startPosition: HexGridPosition | undefined;
   targetPosition: HexGridPosition | undefined;
+  isRunningAnimation: boolean;
+  animationSpeed: number;
   onCellMouseDown: (e: MouseEvent, cell: HexGridCellType) => void;
   onCellMouseEnter: (e: MouseEvent, cell: HexGridCellType) => void;
 };
@@ -23,14 +25,22 @@ export function HexGrid({
   hexCellSizingData,
   startPosition,
   targetPosition,
+  isRunningAnimation,
+  animationSpeed,
   onCellMouseDown,
   onCellMouseEnter,
 }: Props) {
+  // Keep css animation speed synced
+  useEffect(() => {
+    ref?.current?.style.setProperty("--animation-speed", `${animationSpeed}ms`);
+  }, [ref, animationSpeed]);
+
   return (
     <div
       ref={ref}
-      className="flex-grow p-1"
+      className="hex-grid flex-grow p-1"
       onContextMenu={(e) => e.preventDefault()}
+      data-animate={isRunningAnimation}
     >
       {grid.map((row, rowI) => (
         <Fragment key={rowI}>
