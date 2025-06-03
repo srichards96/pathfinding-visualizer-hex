@@ -23,6 +23,7 @@ import {
 import { calculateHexGridPathfind } from "./util/hex/calculate-hex-grid-pathfind";
 import { HexGridPathfindingResult } from "./types/hex-grid-pathfinding-result";
 import { produce } from "immer";
+import { Menu, X } from "lucide-react";
 
 const rows = 25;
 const cols = 8;
@@ -325,9 +326,12 @@ function App() {
         className="flex-shrink-0 w-full md:w-[300px] overflow-y-auto bg-gray-800 text-white p-4 space-y-4 absolute z-10 inset-y-0 data-[open=false]:left-[-100%] data-[open=false]:opacity-0 data-[open=true]:left-0 data-[open=true]:opacity-100 transition-all md:relative md:!left-0 md:!opacity-100"
         data-open={menuOpen}
       >
-        <div className="md:hidden">
-          <button onClick={() => setMenuOpen(false)}>close</button>
-        </div>
+        <button
+          className="absolute right-2 top-2 p-2 md:hidden"
+          onClick={() => setMenuOpen(false)}
+        >
+          <X />
+        </button>
         <div className="space-y-4">
           <h2 className="text-2xl">Controls:</h2>
           <div className="flex gap-2 justify-between">
@@ -373,8 +377,8 @@ function App() {
 
       <div className="flex grow flex-col">
         <div className="shrink-0 bg-gray-800 text-white p-2 flex items-center gap-4">
-          <button className="md:hidden" onClick={() => setMenuOpen(true)}>
-            menu
+          <button className="md:hidden p-2" onClick={() => setMenuOpen(true)}>
+            <Menu />
           </button>
           <h1 className="text-2xl md:text-3xl font-bold">
             Pathfinding Visualizer Hex
