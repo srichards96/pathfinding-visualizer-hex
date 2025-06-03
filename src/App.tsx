@@ -24,6 +24,7 @@ import { calculateHexGridPathfind } from "./util/hex/calculate-hex-grid-pathfind
 import { HexGridPathfindingResult } from "./types/hex-grid-pathfinding-result";
 import { produce } from "immer";
 import { Menu, X } from "lucide-react";
+import { AnimationControls } from "./components/animation-controls";
 
 const rows = 25;
 const cols = 8;
@@ -332,44 +333,16 @@ function App() {
         >
           <X />
         </button>
-        <div className="space-y-4">
-          <h2 className="text-2xl">Controls:</h2>
-          <div className="flex gap-2 justify-between">
-            {!isRunningAnimation && (
-              <button
-                className="border rounded-sm px-4 py-2"
-                onClick={onAnimatePathfindButtonClicked}
-              >
-                Animate Pathfind
-              </button>
-            )}
-            {isRunningAnimation && (
-              <>
-                <button
-                  className="border rounded-sm px-4 py-2"
-                  onClick={onSkipPathfindButtonClicked}
-                >
-                  Skip
-                </button>
-                <button
-                  className="border rounded-sm px-4 py-2"
-                  onClick={clearPathfind}
-                >
-                  Cancel
-                </button>
-              </>
-            )}
 
-            {hasRun && !isRunningAnimation && (
-              <button
-                className="border rounded-sm px-4 py-2"
-                disabled={isRunningAnimation}
-                onClick={clearPathfind}
-              >
-                Reset
-              </button>
-            )}
-          </div>
+        <div className="hidden md:block space-y-4">
+          <h2 className="text-2xl">Controls:</h2>
+          <AnimationControls
+            isAnimationRunning={isRunningAnimation}
+            hasAnimationRan={hasRun}
+            animateFn={onAnimatePathfindButtonClicked}
+            skipAnimationFn={onSkipPathfindButtonClicked}
+            clearAnimationFn={clearPathfind}
+          />
         </div>
 
         <OptionsForm defaultValues={formValues} onSubmit={setFormValues} />
@@ -397,6 +370,16 @@ function App() {
           onCellMouseDown={onCellMouseEvent}
           onCellMouseEnter={onCellMouseEvent}
         />
+
+        <div className="shrink-0 bg-gray-800 text-white p-2 flex items-center gap-4 md:hidden">
+          <AnimationControls
+            isAnimationRunning={isRunningAnimation}
+            hasAnimationRan={hasRun}
+            animateFn={onAnimatePathfindButtonClicked}
+            skipAnimationFn={onSkipPathfindButtonClicked}
+            clearAnimationFn={clearPathfind}
+          />
+        </div>
       </div>
     </main>
   );
