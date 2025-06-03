@@ -9,6 +9,10 @@
   @apply bg-gray-400 select-none;
 }
 
+.hex-grid .hex-grid-cell:not([data-weight="1"]) {
+  @apply bg-gray-600;
+}
+
 .hex-grid .hex-grid-cell[data-wall="true"] {
   @apply bg-black;
 }

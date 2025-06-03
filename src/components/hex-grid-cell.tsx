@@ -5,6 +5,7 @@ import {
 } from "../constants/hex/hex-grid-wide-row-types";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { HexGridCellSizingData } from "../types/hex-grid-cell-sizing-data";
+import { Flag, PersonStanding } from "lucide-react";
 
 type Props = {
   cell: HexGridCellType;
@@ -44,6 +45,7 @@ export function HexGridCell({
       data-wall={cell.wall}
       data-visited={cell.visited}
       data-on-path={cell.onPath}
+      data-weight={cell.weight}
       style={{
         width,
         height,
@@ -57,11 +59,17 @@ export function HexGridCell({
         <span className="absolute left-1/2 top-1/2 -translate-1/2 z-10">
           {isStart || isTarget ? (
             <>
-              {isStart && "start"}
-              {isTarget && "target"}
+              {isStart && <PersonStanding />}
+              {isTarget && <Flag />}
             </>
           ) : (
-            cell.weight
+            <>
+              {cell.weight > 1 && (
+                <span className="font-bold text-xl text-white">
+                  {cell.weight}
+                </span>
+              )}
+            </>
           )}
         </span>
       )}

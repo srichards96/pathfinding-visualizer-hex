@@ -4,6 +4,7 @@ import {
   HexGridPathfindingAlgorithmName,
   HexGridPathfindingAlgorithmNames,
 } from "../constants/hex/hex-grid-pathfinding-algorithms";
+import { Flag, PersonStanding } from "lucide-react";
 
 const hexGridPathfindingAlgorithmNamesSet = new Set<string>(
   Object.values(HexGridPathfindingAlgorithmNames)
@@ -170,6 +171,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               }
             />
             Start
+            <PersonStanding />
           </label>
 
           <label className="flex gap-2 items-center">
@@ -185,6 +187,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               }
             />
             Target
+            <Flag />
           </label>
 
           <label className="flex gap-2 items-center">
