@@ -328,6 +328,7 @@ function App() {
         data-open={menuOpen}
       >
         <button
+          type="button"
           className="absolute right-2 top-2 p-2 md:hidden"
           onClick={() => setMenuOpen(false)}
         >
@@ -350,7 +351,11 @@ function App() {
 
       <div className="flex grow flex-col">
         <div className="shrink-0 bg-gray-800 text-white p-2 flex items-center gap-4">
-          <button className="md:hidden p-2" onClick={() => setMenuOpen(true)}>
+          <button
+            type="button"
+            className="md:hidden p-2"
+            onClick={() => setMenuOpen(true)}
+          >
             <Menu />
           </button>
           <h1 className="text-2xl md:text-3xl font-bold">
