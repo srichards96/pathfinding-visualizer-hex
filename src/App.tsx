@@ -324,7 +324,7 @@ function App() {
   return (
     <main className="flex h-screen relative">
       <div
-        className="flex-shrink-0 w-full md:w-[300px] overflow-y-auto bg-gray-800 text-white p-4 space-y-4 absolute z-10 inset-y-0 data-[open=false]:left-[-100%] data-[open=false]:opacity-0 data-[open=true]:left-0 data-[open=true]:opacity-100 transition-all md:relative md:!left-0 md:!opacity-100"
+        className="flex-shrink-0 w-full md:w-[320px] overflow-y-auto bg-gray-800 text-white p-4 space-y-4 absolute z-10 inset-y-0 data-[open=false]:left-[-100%] data-[open=false]:opacity-0 data-[open=true]:left-0 data-[open=true]:opacity-100 transition-all md:relative md:!left-0 md:!opacity-100"
         data-open={menuOpen}
       >
         <button

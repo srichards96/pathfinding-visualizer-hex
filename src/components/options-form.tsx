@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useId } from "react";
+import { useCallback, useEffect, useId, useMemo } from "react";
 import { useImmer } from "use-immer";
 import {
   HexGridPathfindingAlgorithmName,
   HexGridPathfindingAlgorithmNames,
 } from "../constants/hex/hex-grid-pathfinding-algorithms";
-import { Flag, PersonStanding } from "lucide-react";
+import { Asterisk, Flag, PersonStanding } from "lucide-react";
+import { calculateHexCellSizingData } from "../util/hex/calculate-hex-cell-sizing-data";
+import { HexCell } from "./hex-cell";
 
 const hexGridPathfindingAlgorithmNamesSet = new Set<string>(
   Object.values(HexGridPathfindingAlgorithmNames)
@@ -44,6 +46,13 @@ type Props = {
 };
 
 export function OptionsForm({ defaultValues, onSubmit }: Props) {
+  const hexSizingData = useMemo(() => {
+    return {
+      inner: calculateHexCellSizingData({ sideLength: 12, spacing: 0 }),
+      outer: calculateHexCellSizingData({ sideLength: 14, spacing: 0 }),
+    };
+  }, []);
+
   const [values, setValues] =
     useImmer<PathfindingVisualerFormValues>(defaultValues);
   const [validation, setValidation] = useImmer<FormValidation>({});
@@ -203,6 +212,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               }
             />
             Empty
+            <HexCell style={hexSizingData.inner} data-weight={1} />
           </label>
 
           <label className="flex gap-2 items-center">
@@ -218,6 +228,12 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               }
             />
             Wall
+            <HexCell
+              style={hexSizingData.outer}
+              className="!bg-white flex items-center justify-center"
+            >
+              <HexCell style={hexSizingData.inner} data-wall={true} />
+            </HexCell>
           </label>
 
           <label className="flex gap-2 items-center">
@@ -228,11 +244,23 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
               value="weighted"
               onChange={() =>
                 setValues((draft) => {
-                  draft.cellPaintbrush = { type: "weighted", weight: 1 };
+                  draft.cellPaintbrush = { type: "weighted", weight: 2 };
                 })
               }
             />
             Weighted
+            <HexCell
+              style={hexSizingData.outer}
+              className="!bg-white flex items-center justify-center shrink-0"
+            >
+              <HexCell
+                style={hexSizingData.inner}
+                data-weight={2}
+                className="flex items-center justify-center font-bold text-sm"
+              >
+                <Asterisk className="size-4" />
+              </HexCell>
+            </HexCell>
           </label>
         </fieldset>
 

@@ -4,16 +4,16 @@
   --animation-speed: 1000ms;
 }
 
-.hex-grid .hex-grid-cell {
+.hex-grid-cell {
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   @apply bg-gray-400 select-none;
 }
 
-.hex-grid .hex-grid-cell:not([data-weight="1"]) {
+.hex-grid-cell:not([data-weight="1"]) {
   @apply bg-gray-600;
 }
 
-.hex-grid .hex-grid-cell[data-wall="true"] {
+.hex-grid-cell[data-wall="true"] {
   @apply bg-black;
 }
 

@@ -6,6 +6,7 @@ import {
 import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { HexGridCellSizingData } from "../types/hex-grid-cell-sizing-data";
 import { Flag, PersonStanding } from "lucide-react";
+import { HexCell } from "./hex-cell";
 
 type Props = {
   cell: HexGridCellType;
@@ -40,8 +41,7 @@ export function HexGridCell({
   const top = cell.y * (0.5 * height + 0.5 * spacing);
 
   return (
-    <div
-      className="hex-grid-cell relative"
+    <HexCell
       data-wall={cell.wall}
       data-visited={cell.visited}
       data-on-path={cell.onPath}
@@ -73,6 +73,6 @@ export function HexGridCell({
           )}
         </span>
       )}
-    </div>
+    </HexCell>
   );
 }
