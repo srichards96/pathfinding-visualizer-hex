@@ -148,6 +148,7 @@ export function OptionsForm({ defaultValues, onSubmit }: Props) {
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+      <h2 className="text-2xl">Options:</h2>
       <div className="space-y-2 border p-2 rounded-sm relative">
         <h2 className="text-xl absolute left-1/2 -translate-x-1/2 top-0 -translate-y-1/2 bg-gray-800 px-2">
           Paintbrush

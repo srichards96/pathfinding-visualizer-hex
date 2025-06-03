@@ -30,6 +30,7 @@ const wideRows = HexGridWideRowTypes.Even;
 const animateSpeed = 1000; // How long css animations are when animating pathfind
 
 function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
   // Whether pathfind is currently being animated
   const [isRunningAnimation, setIsRunningAnimation] = useState(false);
   // Whether pathfind has been run (and not been reset)
@@ -320,61 +321,79 @@ function App() {
 
   return (
     <main className="flex h-screen relative">
-      <div className="flex-shrink-0 w-[300px] bg-gray-800 text-white p-2 space-y-4">
-        <h1 className="text-2xl font-bold">Pathfinding Visualizer Hex</h1>
-
-        <div className="flex gap-2 justify-between">
-          {!isRunningAnimation && (
-            <button
-              className="border rounded-sm px-4 py-2"
-              onClick={onAnimatePathfindButtonClicked}
-            >
-              Animate Pathfind
-            </button>
-          )}
-          {isRunningAnimation && (
-            <>
+      <div
+        className="flex-shrink-0 w-full md:w-[300px] overflow-y-auto bg-gray-800 text-white p-4 space-y-4 absolute z-10 inset-y-0 data-[open=false]:left-[-100%] data-[open=false]:opacity-0 data-[open=true]:left-0 data-[open=true]:opacity-100 transition-all md:relative md:!left-0 md:!opacity-100"
+        data-open={menuOpen}
+      >
+        <div className="md:hidden">
+          <button onClick={() => setMenuOpen(false)}>close</button>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-2xl">Controls:</h2>
+          <div className="flex gap-2 justify-between">
+            {!isRunningAnimation && (
               <button
                 className="border rounded-sm px-4 py-2"
-                onClick={onSkipPathfindButtonClicked}
+                onClick={onAnimatePathfindButtonClicked}
               >
-                Skip
+                Animate Pathfind
               </button>
+            )}
+            {isRunningAnimation && (
+              <>
+                <button
+                  className="border rounded-sm px-4 py-2"
+                  onClick={onSkipPathfindButtonClicked}
+                >
+                  Skip
+                </button>
+                <button
+                  className="border rounded-sm px-4 py-2"
+                  onClick={clearPathfind}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+
+            {hasRun && !isRunningAnimation && (
               <button
                 className="border rounded-sm px-4 py-2"
+                disabled={isRunningAnimation}
                 onClick={clearPathfind}
               >
-                Cancel
+                Reset
               </button>
-            </>
-          )}
-
-          {hasRun && !isRunningAnimation && (
-            <button
-              className="border rounded-sm px-4 py-2"
-              disabled={isRunningAnimation}
-              onClick={clearPathfind}
-            >
-              Reset
-            </button>
-          )}
+            )}
+          </div>
         </div>
 
         <OptionsForm defaultValues={formValues} onSubmit={setFormValues} />
       </div>
 
-      <HexGrid
-        ref={gridContainerRef}
-        grid={grid}
-        wideRows={wideRows}
-        hexCellSizingData={hexCellSizingData}
-        startPosition={start}
-        targetPosition={target}
-        isRunningAnimation={isRunningAnimation}
-        animationSpeed={animateSpeed}
-        onCellMouseDown={onCellMouseEvent}
-        onCellMouseEnter={onCellMouseEvent}
-      />
+      <div className="flex grow flex-col">
+        <div className="shrink-0 bg-gray-800 text-white p-2 flex items-center gap-4">
+          <button className="md:hidden" onClick={() => setMenuOpen(true)}>
+            menu
+          </button>
+          <h1 className="text-2xl md:text-3xl font-bold">
+            Pathfinding Visualizer Hex
+          </h1>
+        </div>
+
+        <HexGrid
+          ref={gridContainerRef}
+          grid={grid}
+          wideRows={wideRows}
+          hexCellSizingData={hexCellSizingData}
+          startPosition={start}
+          targetPosition={target}
+          isRunningAnimation={isRunningAnimation}
+          animationSpeed={animateSpeed}
+          onCellMouseDown={onCellMouseEvent}
+          onCellMouseEnter={onCellMouseEvent}
+        />
+      </div>
     </main>
   );
 }
