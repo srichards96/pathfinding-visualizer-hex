@@ -1,12 +1,11 @@
 import { MouseButtonFlag } from "../constants/mouse-buttons";
-import { MouseEvent } from "react";
 
 export function mouseButtonsHeld(
-  e: MouseEvent,
+  buttons: number,
   ...buttonFlags: MouseButtonFlag[]
 ) {
   for (const flag of buttonFlags) {
-    if ((e.buttons & flag) !== flag) {
+    if ((buttons & flag) !== flag) {
       return false;
     }
   }

@@ -210,7 +210,7 @@ function App() {
       let nextTarget = target;
 
       const { x, y } = cell;
-      if (mouseButtonsHeld(e, MouseButtonFlags.left)) {
+      if (mouseButtonsHeld(e.buttons, MouseButtonFlags.left)) {
         switch (formValues.cellPaintbrush.type) {
           case "start":
             nextStart = { x, y };
@@ -239,7 +239,7 @@ function App() {
             break;
           }
         }
-      } else if (mouseButtonsHeld(e, MouseButtonFlags.right)) {
+      } else if (mouseButtonsHeld(e.buttons, MouseButtonFlags.right)) {
         // Clear start position if selected
         if (x === start?.x && y === start.y) {
           nextStart = undefined;
