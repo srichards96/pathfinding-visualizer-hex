@@ -30,11 +30,11 @@ export function getHexNeighbors<TItem>({
     wideRows === HexGridWideRowTypes.Even ? y % 2 === 1 : y % 2 === 0;
 
   return [
-    grid[y - 2]?.[x] ?? null, //                                    Top
-    isWideRow ? grid[y - 1]?.[x] : grid[y - 1]?.[x + 1] ?? null, // Top-right
-    isWideRow ? grid[y + 1]?.[x] : grid[y + 1]?.[x + 1] ?? null, // Bottom-right
-    grid[y + 2]?.[x] ?? null, //                                    Bottom
-    isWideRow ? grid[y + 1]?.[x - 1] : grid[y + 1]?.[x] ?? null, // Bottom-left
-    isWideRow ? grid[y - 1]?.[x - 1] : grid[y - 1]?.[x] ?? null, // Top-left
+    grid[y - 2]?.[x] ?? null, //                                      Top
+    (isWideRow ? grid[y - 1]?.[x] : grid[y - 1]?.[x + 1]) ?? null, // Top-right
+    (isWideRow ? grid[y + 1]?.[x] : grid[y + 1]?.[x + 1]) ?? null, // Bottom-right
+    grid[y + 2]?.[x] ?? null, //                                      Bottom
+    (isWideRow ? grid[y + 1]?.[x - 1] : grid[y + 1]?.[x]) ?? null, // Bottom-left
+    (isWideRow ? grid[y - 1]?.[x - 1] : grid[y - 1]?.[x]) ?? null, // Top-left
   ] as (TItem | null)[];
 }
