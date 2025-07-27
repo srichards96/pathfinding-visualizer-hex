@@ -11,26 +11,20 @@ import {
   PathfindingVisualerFormValues,
 } from "./components/options-form";
 import { calculateHexGridPathfind } from "./util/hex/calculate-hex-grid-pathfind";
-import { HexGridPathfindingResult } from "./types/hex-grid-pathfinding-result";
 import { produce } from "immer";
 import { Menu, X } from "lucide-react";
 import { AnimationControls } from "./components/animation-controls";
 import { useHexGrid } from "./hooks/use-hex-grid";
+import { usePathfindingAnimation } from "./hooks/use-pathfinding-animation";
 
 const wideRows = HexGridWideRowTypes.Even;
 const animateSpeed = 1000; // How long css animations are when animating pathfind
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  // Whether pathfind is currently being animated
-  const [isRunningAnimation, setIsRunningAnimation] = useState(false);
-  // Whether pathfind has been run (and not been reset)
-  const [hasRun, setHasRun] = useState(false);
 
   const [start, setStart] = useState<HexGridPosition>();
   const [target, setTarget] = useState<HexGridPosition>();
-
-  const [timeoutHandles, setTimeoutHandles] = useState<number[]>([]);
 
   const [formValues, setFormValues] = useState<PathfindingVisualerFormValues>({
     cellSize: 30,
@@ -54,105 +48,117 @@ function App() {
     hexCellSizingData,
   });
 
-  const clearPathfind = useCallback(() => {
-    for (const handle of timeoutHandles) {
-      clearTimeout(handle);
-    }
+  const {
+    showPathfindingAnimated,
+    showPathfinding,
+    skipPathfindingAnimation,
+    clearPathfinding,
+    pathfindingAnimationsHaveRan,
+    pathfindingAnimationIsRunning,
+  } = usePathfindingAnimation({
+    animationSpeed: formValues.animationSpeed,
+    setHexGrid,
+  });
 
-    setHexGrid((draft) => {
-      for (const row of draft) {
-        for (const cell of row) {
-          cell.visited = false;
-          cell.onPath = false;
-        }
-      }
-    });
+  // const clearPathfind = useCallback(() => {
+  //   for (const handle of timeoutHandles) {
+  //     clearTimeout(handle);
+  //   }
 
-    setHasRun(false);
-    setIsRunningAnimation(false);
-    setTimeoutHandles([]);
-  }, [timeoutHandles, setHexGrid]);
+  //   setHexGrid((draft) => {
+  //     for (const row of draft) {
+  //       for (const cell of row) {
+  //         cell.visited = false;
+  //         cell.onPath = false;
+  //       }
+  //     }
+  //   });
+
+  //   setHasRun(false);
+  //   setIsRunningAnimation(false);
+  //   setTimeoutHandles([]);
+  // }, [timeoutHandles, setHexGrid]);
 
   // Applies pathfind to grid immediately
-  const applyPathfind = useCallback(
-    ({ cellsTraversed, cellsOnPath }: HexGridPathfindingResult) => {
-      setHasRun(true);
+  // const applyPathfind = useCallback(
+  //   ({ cellsTraversed, cellsOnPath }: HexGridPathfindingResult) => {
+  //     setHasRun(true);
 
-      setHexGrid((draft) => {
-        for (const { x, y } of cellsTraversed) {
-          draft[y][x].visited = true;
-        }
-      });
+  //     setHexGrid((draft) => {
+  //       for (const { x, y } of cellsTraversed) {
+  //         draft[y][x].visited = true;
+  //       }
+  //     });
 
-      setHexGrid((draft) => {
-        if (cellsOnPath === undefined) {
-          return;
-        }
+  //     setHexGrid((draft) => {
+  //       if (cellsOnPath === undefined) {
+  //         return;
+  //       }
 
-        for (const { x, y } of cellsOnPath) {
-          draft[y][x].onPath = true;
-        }
-      });
-    },
-    [setHexGrid]
-  );
+  //       for (const { x, y } of cellsOnPath) {
+  //         draft[y][x].onPath = true;
+  //       }
+  //     });
+  //   },
+  //   [setHexGrid]
+  // );
 
   // Applies pathfind to grid over time, with each step having a delay
-  function applyPathfindWithAnimation({
-    cellsTraversed,
-    cellsOnPath,
-  }: HexGridPathfindingResult) {
-    setIsRunningAnimation(true);
-    setHasRun(true);
+  // function applyPathfindWithAnimation({
+  //   cellsTraversed,
+  //   cellsOnPath,
+  // }: HexGridPathfindingResult) {
+  //   setIsRunningAnimation(true);
+  //   setHasRun(true);
 
-    const handles = [];
+  //   const handles = [];
 
-    // How long it takes for all cellsTravered timeouts to resolve
-    const pathTimeoutOffset = cellsTraversed.length * formValues.animationSpeed;
-    // How long it takes for all timeouts to resolve
-    const endTimeoutOffset =
-      (cellsTraversed.length + (cellsOnPath?.length ?? 0)) *
-      formValues.animationSpeed;
+  //   // How long it takes for all cellsTravered timeouts to resolve
+  //   const pathTimeoutOffset = cellsTraversed.length * formValues.animationSpeed;
+  //   // How long it takes for all timeouts to resolve
+  //   const endTimeoutOffset =
+  //     (cellsTraversed.length + (cellsOnPath?.length ?? 0)) *
+  //     formValues.animationSpeed;
 
-    for (let i = 0; i < cellsTraversed.length; i++) {
-      const { x: stepX, y: stepY } = cellsTraversed[i];
+  //   for (let i = 0; i < cellsTraversed.length; i++) {
+  //     const { x: stepX, y: stepY } = cellsTraversed[i];
 
-      const handle = setTimeout(() => {
-        setHexGrid((draft) => {
-          draft[stepY][stepX].visited = true;
-          return draft;
-        });
-      }, i * formValues.animationSpeed);
-      handles.push(handle);
-    }
+  //     const handle = setTimeout(() => {
+  //       setHexGrid((draft) => {
+  //         draft[stepY][stepX].visited = true;
+  //         return draft;
+  //       });
+  //     }, i * formValues.animationSpeed);
+  //     handles.push(handle);
+  //   }
 
-    if (cellsOnPath !== undefined) {
-      for (let i = 0; i < cellsOnPath.length; i++) {
-        const { x: stepX, y: stepY } = cellsOnPath[i];
+  //   if (cellsOnPath !== undefined) {
+  //     for (let i = 0; i < cellsOnPath.length; i++) {
+  //       const { x: stepX, y: stepY } = cellsOnPath[i];
 
-        const handle = setTimeout(() => {
-          setHexGrid((draft) => {
-            draft[stepY][stepX].onPath = true;
-            return draft;
-          });
-        }, pathTimeoutOffset + i * formValues.animationSpeed);
-        handles.push(handle);
-      }
-    }
+  //       const handle = setTimeout(() => {
+  //         setHexGrid((draft) => {
+  //           draft[stepY][stepX].onPath = true;
+  //           return draft;
+  //         });
+  //       }, pathTimeoutOffset + i * formValues.animationSpeed);
+  //       handles.push(handle);
+  //     }
+  //   }
 
-    // Allow time for last cell animation...
-    const handle = setTimeout(() => {
-      setIsRunningAnimation(false);
-    }, endTimeoutOffset + animateSpeed);
-    handles.push(handle);
+  //   // Allow time for last cell animation...
+  //   const handle = setTimeout(() => {
+  //     setIsRunningAnimation(false);
+  //   }, endTimeoutOffset + animateSpeed);
+  //   handles.push(handle);
 
-    setTimeoutHandles(handles);
-  }
+  //   setTimeoutHandles(handles);
+  // }
 
   // Handler for both cell MouseDown and MouseEnter events...
   const onCellMouseEvent = useCallback(
     (e: MouseEvent, cell: HexGridCellType) => {
-      if (isRunningAnimation) {
+      if (pathfindingAnimationIsRunning) {
         return;
       }
 
@@ -210,7 +216,7 @@ function App() {
       setTarget(nextTarget);
       setHexGrid(nextGrid);
 
-      if (hasRun) {
+      if (pathfindingAnimationsHaveRan) {
         const pathfind = calculateHexGridPathfind({
           grid: nextGrid,
           start: nextStart,
@@ -218,10 +224,9 @@ function App() {
           algorithmName: formValues.algorithm,
           wideRows,
         });
-        clearPathfind();
 
         if (pathfind !== undefined) {
-          applyPathfind(pathfind);
+          showPathfinding(pathfind);
         }
       }
     },
@@ -231,15 +236,14 @@ function App() {
       start,
       target,
       formValues,
-      isRunningAnimation,
-      hasRun,
-      clearPathfind,
-      applyPathfind,
+      pathfindingAnimationIsRunning,
+      pathfindingAnimationsHaveRan,
+      showPathfinding,
     ]
   );
 
   function onAnimatePathfindButtonClicked() {
-    if (isRunningAnimation) {
+    if (pathfindingAnimationIsRunning) {
       return;
     }
 
@@ -252,23 +256,7 @@ function App() {
     });
 
     if (pathfindResult !== undefined) {
-      clearPathfind();
-      applyPathfindWithAnimation(pathfindResult);
-    }
-  }
-  function onSkipPathfindButtonClicked() {
-    clearPathfind();
-
-    const pathfindResult = calculateHexGridPathfind({
-      grid: hexGrid,
-      start: start,
-      target: target,
-      algorithmName: formValues.algorithm,
-      wideRows,
-    });
-
-    if (pathfindResult !== undefined) {
-      applyPathfind(pathfindResult);
+      showPathfindingAnimated(pathfindResult);
     }
   }
 
@@ -289,11 +277,11 @@ function App() {
         <div className="hidden md:block space-y-4">
           <h2 className="text-2xl">Controls:</h2>
           <AnimationControls
-            isAnimationRunning={isRunningAnimation}
-            hasAnimationRan={hasRun}
+            isAnimationRunning={pathfindingAnimationIsRunning}
+            hasAnimationRan={pathfindingAnimationsHaveRan}
             animateFn={onAnimatePathfindButtonClicked}
-            skipAnimationFn={onSkipPathfindButtonClicked}
-            clearAnimationFn={clearPathfind}
+            skipAnimationFn={skipPathfindingAnimation}
+            clearAnimationFn={clearPathfinding}
           />
         </div>
 
@@ -321,7 +309,7 @@ function App() {
           hexCellSizingData={hexCellSizingData}
           startPosition={start}
           targetPosition={target}
-          isRunningAnimation={isRunningAnimation}
+          isRunningAnimation={pathfindingAnimationIsRunning}
           animationSpeed={animateSpeed}
           onCellMouseDown={onCellMouseEvent}
           onCellMouseEnter={onCellMouseEvent}
@@ -329,11 +317,11 @@ function App() {
 
         <div className="shrink-0 bg-gray-800 text-white p-2 flex items-center gap-4 md:hidden">
           <AnimationControls
-            isAnimationRunning={isRunningAnimation}
-            hasAnimationRan={hasRun}
+            isAnimationRunning={pathfindingAnimationIsRunning}
+            hasAnimationRan={pathfindingAnimationsHaveRan}
             animateFn={onAnimatePathfindButtonClicked}
-            skipAnimationFn={onSkipPathfindButtonClicked}
-            clearAnimationFn={clearPathfind}
+            skipAnimationFn={skipPathfindingAnimation}
+            clearAnimationFn={clearPathfinding}
           />
         </div>
       </div>
