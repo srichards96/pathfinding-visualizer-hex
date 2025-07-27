@@ -1,21 +1,11 @@
-import { makeHexGrid } from "./util/hex/make-hex-grid";
 import { HexGridWideRowTypes } from "./constants/hex/hex-grid-wide-row-types";
-import { useImmer } from "use-immer";
 import { HexGridPosition } from "./types/hex-grid-position";
 import { mouseButtonsHeld } from "./util/mouse-buttons-held";
 import { MouseButtonFlags } from "./constants/mouse-buttons";
 import { HexGridCellType } from "./types/hex-grid-cell-type";
 import { HexGrid } from "./components/hex-grid";
-import {
-  useCallback,
-  useState,
-  MouseEvent,
-  useMemo,
-  useEffect,
-  useRef,
-} from "react";
+import { useCallback, useState, MouseEvent, useMemo } from "react";
 import { calculateHexCellSizingData } from "./util/hex/calculate-hex-cell-sizing-data";
-import { resizeHexGridToFitContainer } from "./util/hex/resize-hex-grid-to-fit-container";
 import {
   OptionsForm,
   PathfindingVisualerFormValues,
@@ -25,9 +15,8 @@ import { HexGridPathfindingResult } from "./types/hex-grid-pathfinding-result";
 import { produce } from "immer";
 import { Menu, X } from "lucide-react";
 import { AnimationControls } from "./components/animation-controls";
+import { useHexGrid } from "./hooks/use-hex-grid";
 
-const rows = 25;
-const cols = 8;
 const wideRows = HexGridWideRowTypes.Even;
 const animateSpeed = 1000; // How long css animations are when animating pathfind
 
@@ -38,13 +27,10 @@ function App() {
   // Whether pathfind has been run (and not been reset)
   const [hasRun, setHasRun] = useState(false);
 
-  const [grid, setGrid] = useImmer(() => makeHexGrid({ rows, cols, wideRows }));
   const [start, setStart] = useState<HexGridPosition>();
   const [target, setTarget] = useState<HexGridPosition>();
 
   const [timeoutHandles, setTimeoutHandles] = useState<number[]>([]);
-
-  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   const [formValues, setFormValues] = useState<PathfindingVisualerFormValues>({
     cellSize: 30,
@@ -63,52 +49,17 @@ function App() {
     });
   }, [formValues.cellSize, formValues.cellSpacing]);
 
-  // On load, and when cell sizing changes, resize grid to fit available space...
-  useEffect(() => {
-    const gridContainerElement = gridContainerRef.current;
-
-    if (gridContainerElement == null) {
-      return;
-    }
-
-    setGrid((draft) =>
-      resizeHexGridToFitContainer({
-        grid: draft,
-        element: gridContainerElement,
-        hexCellSizingData,
-        wideRows,
-      })
-    );
-  }, [hexCellSizingData, setGrid]);
-
-  // On window resize, and when cell sizing changes, resize grid to fit available space...
-  useEffect(() => {
-    function onResize() {
-      const gridContainerElement = gridContainerRef.current;
-
-      if (gridContainerElement !== null) {
-        setGrid((draft) =>
-          resizeHexGridToFitContainer({
-            grid: draft,
-            element: gridContainerElement,
-            hexCellSizingData,
-            wideRows,
-          })
-        );
-      }
-    }
-
-    window.addEventListener("resize", onResize);
-
-    return () => window.removeEventListener("resize", onResize);
-  }, [hexCellSizingData, setGrid]);
+  const { hexGrid, setHexGrid, gridContainerRef } = useHexGrid({
+    wideRows,
+    hexCellSizingData,
+  });
 
   const clearPathfind = useCallback(() => {
     for (const handle of timeoutHandles) {
       clearTimeout(handle);
     }
 
-    setGrid((draft) => {
+    setHexGrid((draft) => {
       for (const row of draft) {
         for (const cell of row) {
           cell.visited = false;
@@ -120,20 +71,20 @@ function App() {
     setHasRun(false);
     setIsRunningAnimation(false);
     setTimeoutHandles([]);
-  }, [timeoutHandles, setGrid]);
+  }, [timeoutHandles, setHexGrid]);
 
   // Applies pathfind to grid immediately
   const applyPathfind = useCallback(
     ({ cellsTraversed, cellsOnPath }: HexGridPathfindingResult) => {
       setHasRun(true);
 
-      setGrid((draft) => {
+      setHexGrid((draft) => {
         for (const { x, y } of cellsTraversed) {
           draft[y][x].visited = true;
         }
       });
 
-      setGrid((draft) => {
+      setHexGrid((draft) => {
         if (cellsOnPath === undefined) {
           return;
         }
@@ -143,7 +94,7 @@ function App() {
         }
       });
     },
-    [setGrid]
+    [setHexGrid]
   );
 
   // Applies pathfind to grid over time, with each step having a delay
@@ -167,7 +118,7 @@ function App() {
       const { x: stepX, y: stepY } = cellsTraversed[i];
 
       const handle = setTimeout(() => {
-        setGrid((draft) => {
+        setHexGrid((draft) => {
           draft[stepY][stepX].visited = true;
           return draft;
         });
@@ -180,7 +131,7 @@ function App() {
         const { x: stepX, y: stepY } = cellsOnPath[i];
 
         const handle = setTimeout(() => {
-          setGrid((draft) => {
+          setHexGrid((draft) => {
             draft[stepY][stepX].onPath = true;
             return draft;
           });
@@ -205,7 +156,7 @@ function App() {
         return;
       }
 
-      let nextGrid = grid;
+      let nextGrid = hexGrid;
       let nextStart = start;
       let nextTarget = target;
 
@@ -219,20 +170,20 @@ function App() {
             nextTarget = { x, y };
             break;
           case "empty":
-            nextGrid = produce(grid, (draft) => {
+            nextGrid = produce(hexGrid, (draft) => {
               draft[y][x].weight = 1;
               draft[y][x].wall = false;
             });
             break;
           case "wall":
-            nextGrid = produce(grid, (draft) => {
+            nextGrid = produce(hexGrid, (draft) => {
               draft[y][x].weight = 1;
               draft[y][x].wall = true;
             });
             break;
           case "weighted": {
             const weight = formValues.cellPaintbrush.weight;
-            nextGrid = produce(grid, (draft) => {
+            nextGrid = produce(hexGrid, (draft) => {
               draft[y][x].weight = weight;
               draft[y][x].wall = false;
             });
@@ -249,7 +200,7 @@ function App() {
           nextTarget = undefined;
         }
         // Clear weight/wall state
-        nextGrid = produce(grid, (draft) => {
+        nextGrid = produce(hexGrid, (draft) => {
           draft[y][x].weight = 1;
           draft[y][x].wall = false;
         });
@@ -257,7 +208,7 @@ function App() {
 
       setStart(nextStart);
       setTarget(nextTarget);
-      setGrid(nextGrid);
+      setHexGrid(nextGrid);
 
       if (hasRun) {
         const pathfind = calculateHexGridPathfind({
@@ -275,8 +226,8 @@ function App() {
       }
     },
     [
-      setGrid,
-      grid,
+      setHexGrid,
+      hexGrid,
       start,
       target,
       formValues,
@@ -293,7 +244,7 @@ function App() {
     }
 
     const pathfindResult = calculateHexGridPathfind({
-      grid,
+      grid: hexGrid,
       start: start,
       target: target,
       algorithmName: formValues.algorithm,
@@ -309,7 +260,7 @@ function App() {
     clearPathfind();
 
     const pathfindResult = calculateHexGridPathfind({
-      grid,
+      grid: hexGrid,
       start: start,
       target: target,
       algorithmName: formValues.algorithm,
@@ -365,7 +316,7 @@ function App() {
 
         <HexGrid
           ref={gridContainerRef}
-          grid={grid}
+          grid={hexGrid}
           wideRows={wideRows}
           hexCellSizingData={hexCellSizingData}
           startPosition={start}
