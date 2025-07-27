@@ -146,7 +146,7 @@ describe("usePathfindingAnimation", () => {
   });
 
   describe("after `showPathfindingAnimated` is called", () => {
-    it("should not initially call `setHexGrid`", () => {
+    it("should call `setHexGrid` only 1 time (to clear old state)", () => {
       const setHexGrid = vi.fn();
 
       const { result } = renderHook(() =>
@@ -156,12 +156,11 @@ describe("usePathfindingAnimation", () => {
       // Initially not called
       expect(setHexGrid).toHaveBeenCalledTimes(0);
 
+      // Should have ran 1 time (to clear old state)
       act(() => {
         result.current.showPathfindingAnimated(pathfindingResult);
       });
-
-      // Not called prior to animationSpeed ms
-      expect(setHexGrid).toHaveBeenCalledTimes(0);
+      expect(setHexGrid).toHaveBeenCalledTimes(1);
     });
 
     it("should call `setHexGrid` in an interval for each traversal/path step", () => {
@@ -174,27 +173,29 @@ describe("usePathfindingAnimation", () => {
       // Initially not called
       expect(setHexGrid).toHaveBeenCalledTimes(0);
 
+      // Should have ran 1 time (to clear old state)
       act(() => {
         result.current.showPathfindingAnimated(pathfindingResult);
       });
+      expect(setHexGrid).toHaveBeenCalledTimes(1);
 
-      // Not called prior to animationSpeed ms
+      // Not called again prior to animationSpeed ms
       act(() => {
         vi.advanceTimersByTime(animationSpeed - 1);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(0);
+      expect(setHexGrid).toHaveBeenCalledTimes(1);
 
-      // Called after animationSpeed ms
+      // Called again after animationSpeed ms
       act(() => {
         vi.advanceTimersByTime(1);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(1);
+      expect(setHexGrid).toHaveBeenCalledTimes(2);
 
-      // Called 2 times after animationSpeed * 2 ms
+      // Called again times after another animationSpeed ms
       act(() => {
         vi.advanceTimersByTime(animationSpeed);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(2);
+      expect(setHexGrid).toHaveBeenCalledTimes(3);
     });
 
     it("should stop calling `setHexGrid` in an interval when all traversal/path steps have been completed", () => {
@@ -207,34 +208,33 @@ describe("usePathfindingAnimation", () => {
       // Initially not called
       expect(setHexGrid).toHaveBeenCalledTimes(0);
 
+      // Should have ran 1 time (to clear old state)
       act(() => {
         result.current.showPathfindingAnimated(pathfindingResult);
       });
-
-      // Still not called
-      expect(setHexGrid).toHaveBeenCalledTimes(0);
+      expect(setHexGrid).toHaveBeenCalledTimes(1);
 
       const traversalSteps = pathfindingResult.cellsTraversed.length;
       const pathSteps = pathfindingResult.cellsOnPath.length;
 
-      // After traversalSteps * animationSpeed ms, setHexGrid should've been called traversalSteps times
+      // After traversalSteps * animationSpeed ms, setHexGrid should've been called traversalSteps more times
       act(() => {
         vi.advanceTimersByTime(animationSpeed * traversalSteps);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(traversalSteps);
+      expect(setHexGrid).toHaveBeenCalledTimes(1 + traversalSteps);
 
       // After (traversalSteps + pathStep) * animationSpeed ms,
-      //   setHexGrid should've been called (traversalSteps + pathSteps) times
+      //   setHexGrid should've been called (traversalSteps + pathSteps) more times
       act(() => {
         vi.advanceTimersByTime(animationSpeed * pathSteps);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(traversalSteps + pathSteps);
+      expect(setHexGrid).toHaveBeenCalledTimes(1 + traversalSteps + pathSteps);
 
       // After all traversal/path steps have been processed, setHexGrid shouldn't be called after any amount of time
       act(() => {
         vi.advanceTimersByTime(animationSpeed * 10);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(traversalSteps + pathSteps);
+      expect(setHexGrid).toHaveBeenCalledTimes(1 + traversalSteps + pathSteps);
     });
 
     it("should stop calling `setHexGrid` in an interval and run it 1 time after `skipPathfindingAnimation` is called", () => {
@@ -247,27 +247,29 @@ describe("usePathfindingAnimation", () => {
       // Initially not called
       expect(setHexGrid).toHaveBeenCalledTimes(0);
 
+      // Should have ran 1 time (to clear old state)
       act(() => {
         result.current.showPathfindingAnimated(pathfindingResult);
       });
+      expect(setHexGrid).toHaveBeenCalledTimes(1);
 
-      // After 3 * animationSpeed ms, setHexGrid should've been called 3 times
+      // After 3 * animationSpeed ms, setHexGrid should've been called 4 times
       act(() => {
         vi.advanceTimersByTime(animationSpeed * 3);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(3);
+      expect(setHexGrid).toHaveBeenCalledTimes(4);
 
       // Calling skipPathfindingAnimation should result in setHexGrid being called 1 more time
       act(() => {
         result.current.skipPathfindingAnimation();
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(4);
+      expect(setHexGrid).toHaveBeenCalledTimes(5);
 
       // After skipPathfindingAnimation was called, setHexGrid shouldn't be called after any amount of time
       act(() => {
         vi.advanceTimersByTime(animationSpeed * 10);
       });
-      expect(setHexGrid).toHaveBeenCalledTimes(4);
+      expect(setHexGrid).toHaveBeenCalledTimes(5);
     });
   });
 
