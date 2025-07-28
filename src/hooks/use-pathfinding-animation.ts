@@ -4,6 +4,10 @@ import { useCounter } from "./use-counter";
 import { useInterval } from "./use-interval";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { Updater } from "use-immer";
+import { useConditionalDebounceValue } from "./use-conditional-debounce-value";
+
+// Keep this synced with css
+export const cellAnimationSpeed = 1000;
 
 type Props = {
   animationSpeed: number;
@@ -27,6 +31,16 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
   const pathAnimationRunning =
     !!animationSteps?.cellsOnPath &&
     pathAnimationIndex.value < animationSteps.cellsOnPath.length;
+
+  const animationRunning = traversalAnimationRunning || pathAnimationRunning;
+  const debouncedAnimationRunning = useConditionalDebounceValue({
+    value: animationRunning,
+    delay: cellAnimationSpeed,
+    // Debounce only if pathfinding animations have ran and value is false
+    condition: (v) => pathfindingAnimationsHaveRan && !v,
+  });
+  const pathfindingAnimationIsRunning =
+    animationRunning || debouncedAnimationRunning;
 
   // Animates traversal steps
   useInterval(
@@ -181,7 +195,6 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
     /**
      * Whether the current animations are currently running.
      */
-    pathfindingAnimationIsRunning:
-      traversalAnimationRunning || pathAnimationRunning,
+    pathfindingAnimationIsRunning,
   };
 }

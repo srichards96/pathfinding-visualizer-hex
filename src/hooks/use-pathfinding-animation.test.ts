@@ -1,6 +1,9 @@
 import { renderHook } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { usePathfindingAnimation } from "./use-pathfinding-animation";
+import {
+  cellAnimationSpeed,
+  usePathfindingAnimation,
+} from "./use-pathfinding-animation";
 import { act } from "react";
 import { HexGridPathfindingResult } from "../types/hex-grid-pathfinding-result";
 
@@ -116,9 +119,15 @@ describe("usePathfindingAnimation", () => {
       });
       expect(result.current.pathfindingAnimationIsRunning).toEqual(true);
 
-      // All steps completed, so should be false
+      // All steps completed, but not all animations completed (needs another animationSpeed ms)
       act(() => {
         vi.advanceTimersByTime(pathSteps * animationSpeed);
+      });
+      expect(result.current.pathfindingAnimationIsRunning).toEqual(true);
+
+      // All animations completed
+      act(() => {
+        vi.advanceTimersByTime(cellAnimationSpeed);
       });
       expect(result.current.pathfindingAnimationIsRunning).toEqual(false);
     });
