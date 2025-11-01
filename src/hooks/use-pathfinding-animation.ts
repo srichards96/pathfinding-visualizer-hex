@@ -37,7 +37,10 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
     value: animationRunning,
     delay: cellAnimationSpeed,
     // Debounce only if pathfinding animations have ran and value is false
-    condition: (v) => pathfindingAnimationsHaveRan && !v,
+    condition: useCallback(
+      (v: boolean) => pathfindingAnimationsHaveRan && !v,
+      [pathfindingAnimationsHaveRan]
+    ),
   });
   const pathfindingAnimationIsRunning =
     animationRunning || debouncedAnimationRunning;
