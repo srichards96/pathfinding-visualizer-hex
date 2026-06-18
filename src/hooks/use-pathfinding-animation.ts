@@ -4,7 +4,7 @@ import { useCounter } from "./use-counter";
 import { useInterval } from "./use-interval";
 import { HexGridCellType } from "../types/hex-grid-cell-type";
 import { Updater } from "use-immer";
-import { useConditionalDebounceValue } from "./use-conditional-debounce-value";
+import { useDebouncedValue } from "./use-debounced-value";
 
 // Keep this synced with css
 export const cellAnimationSpeed = 1000;
@@ -33,15 +33,14 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
     pathAnimationIndex.value < animationSteps.cellsOnPath.length;
 
   const animationRunning = traversalAnimationRunning || pathAnimationRunning;
-  const debouncedAnimationRunning = useConditionalDebounceValue({
-    value: animationRunning,
-    delay: cellAnimationSpeed,
-    // Debounce only if pathfinding animations have ran and value is false
-    condition: useCallback(
-      (v: boolean) => pathfindingAnimationsHaveRan && !v,
-      [pathfindingAnimationsHaveRan]
-    ),
-  });
+  const debouncedAnimationRunning = useDebouncedValue(
+    animationRunning,
+    // Only debounce while animations have previously ran and aren't currently running
+    pathfindingAnimationsHaveRan && !animationRunning
+      ? cellAnimationSpeed
+      : null,
+  );
+
   const pathfindingAnimationIsRunning =
     animationRunning || debouncedAnimationRunning;
 
@@ -58,7 +57,7 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
       traversalAnimationIndex.increment(); // Eventually, this will cause the interval to stop
     },
     // While there are traversal steps left to animate
-    traversalAnimationRunning ? animationSpeed : null
+    traversalAnimationRunning ? animationSpeed : null,
   );
 
   // Animates path steps
@@ -73,7 +72,7 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
       pathAnimationIndex.increment(); // Eventually, this will cause the interval to stop
     },
     // After traversal animation has finished and while there are path steps left to animate
-    !traversalAnimationRunning && pathAnimationRunning ? animationSpeed : null
+    !traversalAnimationRunning && pathAnimationRunning ? animationSpeed : null,
   );
 
   /** Sets new pathfinding steps and animates them step-by-step */
@@ -96,7 +95,7 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
       traversalAnimationIndex.reset();
       pathAnimationIndex.reset();
     },
-    [traversalAnimationIndex, pathAnimationIndex, setHexGrid]
+    [traversalAnimationIndex, pathAnimationIndex, setHexGrid],
   );
 
   /** Sets new pathfinding steps and shows them all immediately (no animation) */
@@ -128,7 +127,7 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
       traversalAnimationIndex.setValue(newAnimationSteps.cellsTraversed.length);
       pathAnimationIndex.setValue(newAnimationSteps.cellsOnPath?.length ?? 0);
     },
-    [traversalAnimationIndex, pathAnimationIndex, setHexGrid]
+    [traversalAnimationIndex, pathAnimationIndex, setHexGrid],
   );
 
   const skipPathfindingAnimation = useCallback(() => {
@@ -153,7 +152,7 @@ export function usePathfindingAnimation({ animationSpeed, setHexGrid }: Props) {
 
     // Set animation indices to final values, so that there are no steps remaining to animate
     traversalAnimationIndex.setValue(
-      animationSteps?.cellsTraversed.length ?? 0
+      animationSteps?.cellsTraversed.length ?? 0,
     );
     pathAnimationIndex.setValue(animationSteps?.cellsOnPath?.length ?? 0);
   }, [animationSteps, traversalAnimationIndex, pathAnimationIndex, setHexGrid]);
