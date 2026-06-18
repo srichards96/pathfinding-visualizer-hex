@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useInterval } from "./use-interval";
 
@@ -11,16 +19,19 @@ describe("useInterval", () => {
   beforeAll(() => {
     vi.useFakeTimers();
   });
-
   afterAll(() => {
     vi.useRealTimers();
+  });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
   });
 
   it("should set up an interval on mount if `delay` is not null", () => {
     vi.spyOn(window, "setInterval");
 
     renderHook((props: UseIntervalProps = { callback: vi.fn(), delay: 1000 }) =>
-      useInterval(props.callback, props.delay)
+      useInterval(props.callback, props.delay),
     );
 
     expect(setInterval).toHaveBeenCalledTimes(1);
@@ -30,7 +41,7 @@ describe("useInterval", () => {
     vi.spyOn(window, "setInterval");
 
     renderHook((props: UseIntervalProps = { callback: vi.fn(), delay: null }) =>
-      useInterval(props.callback, props.delay)
+      useInterval(props.callback, props.delay),
     );
 
     expect(setInterval).toHaveBeenCalledTimes(0);
@@ -42,7 +53,7 @@ describe("useInterval", () => {
 
     const { rerender } = renderHook(
       (props: UseIntervalProps = { callback, delay: 1000 }) =>
-        useInterval(props.callback, props.delay)
+        useInterval(props.callback, props.delay),
     );
 
     expect(clearInterval).toHaveBeenCalledTimes(0);
@@ -59,7 +70,7 @@ describe("useInterval", () => {
 
     const { rerender } = renderHook(
       (props: UseIntervalProps = { callback, delay: 1000 }) =>
-        useInterval(props.callback, props.delay)
+        useInterval(props.callback, props.delay),
     );
 
     expect(setInterval).toHaveBeenCalledTimes(1);
@@ -78,7 +89,7 @@ describe("useInterval", () => {
 
     const { rerender } = renderHook(
       (props: UseIntervalProps = { callback, delay: 1000 }) =>
-        useInterval(props.callback, props.delay)
+        useInterval(props.callback, props.delay),
     );
 
     expect(setInterval).toHaveBeenCalledTimes(1);
@@ -97,7 +108,7 @@ describe("useInterval", () => {
 
     const { rerender } = renderHook(
       (props: UseIntervalProps = { callback: vi.fn(), delay }) =>
-        useInterval(props.callback, props.delay)
+        useInterval(props.callback, props.delay),
     );
 
     expect(setInterval).toHaveBeenCalledTimes(1);
@@ -114,7 +125,7 @@ describe("useInterval", () => {
 
     const { rerender } = renderHook(
       (props: UseIntervalProps = { callback, delay: 1000 }) =>
-        useInterval(props.callback, props.delay)
+        useInterval(props.callback, props.delay),
     );
 
     // Should have ran 0 times initially

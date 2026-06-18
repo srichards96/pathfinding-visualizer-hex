@@ -1,11 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 export function useInterval(callback: () => void, delay: number | null) {
-  const callbackRef = useRef(callback);
-
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
+  const callbackEvent = useEffectEvent(callback);
 
   useEffect(() => {
     if (delay === null) {
@@ -13,7 +9,7 @@ export function useInterval(callback: () => void, delay: number | null) {
     }
 
     const handle = setInterval(() => {
-      callbackRef.current();
+      callbackEvent();
     }, delay);
 
     return () => {

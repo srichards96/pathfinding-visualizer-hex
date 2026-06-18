@@ -7,6 +7,7 @@ type Props<T> = {
   condition: (v: T) => boolean;
 };
 
+// TODO: rewrite so that eslint suppression is unnecessary...
 export function useConditionalDebounceValue<T>({
   value,
   delay,
@@ -24,6 +25,7 @@ export function useConditionalDebounceValue<T>({
         clearTimeout(handle);
       };
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDebouncedValue(value);
     }
   }, [value, delay, condition]);

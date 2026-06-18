@@ -1,5 +1,14 @@
 import { renderHook } from "@testing-library/react";
-import { afterAll, beforeAll, describe, expect, it, test, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  test,
+  vi,
+} from "vitest";
 import { useConditionalDebounceValue } from "./use-conditional-debounce-value";
 import { act } from "react";
 
@@ -13,9 +22,12 @@ describe("useDebouncedValue", () => {
   beforeAll(() => {
     vi.useFakeTimers();
   });
-
   afterAll(() => {
     vi.useRealTimers();
+  });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
   });
 
   it("should initially return the first `value`", () => {
@@ -26,7 +38,7 @@ describe("useDebouncedValue", () => {
         value,
         delay: 1000,
         condition: vi.fn(),
-      })
+      }),
     );
 
     expect(result.current).toEqual(value);
@@ -41,7 +53,7 @@ describe("useDebouncedValue", () => {
           value: "abcde",
           delay: 1000,
           condition: () => true,
-        })
+        }),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(1);
@@ -58,8 +70,8 @@ describe("useDebouncedValue", () => {
             value: "abcde",
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(1);
@@ -80,8 +92,8 @@ describe("useDebouncedValue", () => {
             value: "abcde",
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(1);
@@ -102,8 +114,8 @@ describe("useDebouncedValue", () => {
             value: value1,
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       // Initial value
@@ -150,8 +162,8 @@ describe("useDebouncedValue", () => {
             value: value1,
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       // Initial value
@@ -183,7 +195,7 @@ describe("useDebouncedValue", () => {
           value: "abcde",
           delay: 1000,
           condition: () => false,
-        })
+        }),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(0);
@@ -200,8 +212,8 @@ describe("useDebouncedValue", () => {
             value: "abcde",
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(0);
@@ -222,8 +234,8 @@ describe("useDebouncedValue", () => {
             value: "12345",
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       expect(setTimeout).toHaveBeenCalledTimes(0);
@@ -244,8 +256,8 @@ describe("useDebouncedValue", () => {
             value: value1,
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       // Initial value
@@ -275,8 +287,8 @@ describe("useDebouncedValue", () => {
             value: value1,
             delay,
             condition,
-          }
-        ) => useConditionalDebounceValue(props)
+          },
+        ) => useConditionalDebounceValue(props),
       );
 
       // Initial value

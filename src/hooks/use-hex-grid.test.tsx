@@ -1,5 +1,5 @@
 import { fireEvent, render, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useHexGrid } from "./use-hex-grid";
 import { calculateHexCellSizingData } from "../util/hex/calculate-hex-cell-sizing-data";
 import {
@@ -25,24 +25,28 @@ const hexCellSizingData2 = calculateHexCellSizingData({
 });
 
 describe("useHexGrid", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
   describe("without `gridContainerRef` in use", () => {
     it("should initially not resize and produce an empty hex grid", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       renderHook(() => useHexGrid({ wideRows, hexCellSizingData }));
 
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(0);
     });
 
     it("should not resize when `hexCellSizingData` changes", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       const { rerender } = renderHook(
@@ -50,25 +54,25 @@ describe("useHexGrid", () => {
           props: UseHexGridProps = {
             wideRows,
             hexCellSizingData,
-          }
-        ) => useHexGrid(props)
+          },
+        ) => useHexGrid(props),
       );
 
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(0);
 
       rerender({ wideRows, hexCellSizingData: hexCellSizingData2 });
 
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(0);
     });
 
     it("should not resize when `resize` events fire on the `window` object", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       renderHook(
@@ -76,18 +80,18 @@ describe("useHexGrid", () => {
           props: UseHexGridProps = {
             wideRows,
             hexCellSizingData,
-          }
-        ) => useHexGrid(props)
+          },
+        ) => useHexGrid(props),
       );
 
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(0);
 
       fireEvent.resize(window);
 
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(0);
     });
   });
@@ -96,7 +100,7 @@ describe("useHexGrid", () => {
     it("should initially resize and produce a hex grid that fits the element that `gridContainerRef` is attached to", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       const TestComponent = () => {
@@ -109,14 +113,14 @@ describe("useHexGrid", () => {
 
       // 1st render had ref attached, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(1);
     });
 
     it("should resize when `hexCellSizingData` changes", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       type TestComponentProps = {
@@ -132,33 +136,33 @@ describe("useHexGrid", () => {
       };
 
       const { rerender } = render(
-        <TestComponent hexCellSizingData={hexCellSizingData} />
+        <TestComponent hexCellSizingData={hexCellSizingData} />,
       );
 
       // 1st render had ref attached, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(1);
 
       rerender(<TestComponent hexCellSizingData={hexCellSizingData2} />);
 
       // hexCellSizingData changed, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(2);
 
       rerender(<TestComponent hexCellSizingData={hexCellSizingData2} />);
 
       // hexCellSizingData didn't change, so effect to resize to container shouldn't have ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(2);
     });
 
     it("should resize when `resize` events fire on the `window` object", () => {
       vi.spyOn(
         ResizeHexGridToFitContainerModule,
-        "resizeHexGridToFitContainer"
+        "resizeHexGridToFitContainer",
       );
 
       const TestComponent = () => {
@@ -171,21 +175,21 @@ describe("useHexGrid", () => {
 
       // 1st render had ref attached, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(1);
 
       fireEvent.resize(window);
 
       // Window had resize event, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(2);
 
       fireEvent.resize(window);
 
       // Window had resize event, so effect to resize to container should've ran
       expect(
-        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer
+        ResizeHexGridToFitContainerModule.resizeHexGridToFitContainer,
       ).toHaveBeenCalledTimes(3);
     });
   });
